@@ -11,10 +11,13 @@ This repository fulfills all requirements of the **SEO Audit Agent Assessment**:
 
 ## Key Highlights
 
-- **100% Free & Open**: Powered entirely by Python standard library, `requests`, and `beautifulsoup4`. Zero paid API keys, zero token usage bills, zero external service dependencies.
+- **100% Free & Open Core**: Powered entirely by Python standard library, `requests`, and `beautifulsoup4`. Zero paid API subscriptions or mandatory commercial dependencies.
+- **Optional Multi-Provider AI (Gemini, Groq, OpenAI)**: Free-tier / API key integration for AI-generated code fixes (Q1) and hybrid passage verification (Q3). Seamlessly switch between providers (`--ai-provider {auto,gemini,groq,openai,none}`) or environment variables (`GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENAI_API_KEY`).
+- **Zero-Downtime Automatic Fallback**: If an AI key is missing, network fails, or rate limits occur, the system automatically falls back to deterministic manual algorithms without crashing or breaking output schemas.
 - **Strict Evidence-Backed Findings**: Every audit finding links directly to extracted markup, HTTP headers, or network timing.
-- **True Generalization**: Autonomous discovery via XML sitemaps, `robots.txt`, and internal links without hardcoded paths or pre-configured site knowledge.
+- **Expanded SEO & AEO Metrics**: Click-depth tracking, redirect chains, sitemap orphan detection, `/llms.txt` audits, AI bot permissions (`GPTBot`, `ClaudeBot`, `PerplexityBot`), DOM depth/node count, render-blocking scripts, and missing image dimensions.
 - **Deterministic & Grounded**: Question 3 employs BM25 retrieval with suffix stemming and strict grounding thresholds to return exact, unaltered passages — with a guaranteed `null` refusal to guess when the site does not contain the answer.
+- **Question 2 Rule-Based Guarantee**: Question 2 remains 100% deterministic, rule-based, and free of third-party normalization or AI dependencies.
 
 ---
 

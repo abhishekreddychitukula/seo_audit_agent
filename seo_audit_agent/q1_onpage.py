@@ -5,8 +5,10 @@ import re
 from collections import defaultdict
 from urllib.parse import urlparse
 
-from bs4 import BeautifulSoup
+import requests
+from bs4 import BeautifulSoup, Tag
 
+from .ai_provider import AIProvider, ProviderType
 from .crawler import Page, SiteCrawler
 
 
@@ -21,19 +23,105 @@ def finding(metric: str, page: str, severity: str, evidence: str, suggested_fix:
 
 
 def visible_text(soup: BeautifulSoup) -> str:
-    # Clone soup or decompose non-content tags
     for x in soup(["script", "style", "noscript", "template", "svg"]):
         x.decompose()
     return " ".join(soup.stripped_strings)
 
 
-def audit(pages: list[Page]) -> list[dict]:
+def compute_max_dom_depth(node: Tag, current_depth: int = 1) -> int:
+    max_d = current_depth
+    for child in node.find_all(recursive=False):
+        if isinstance(child, Tag):
+            max_d = max(max_d, compute_max_dom_depth(child, current_depth + 1))
+    return max_d
+
+
+def audit(
+    pages: list[Page],
+    crawler: SiteCrawler | None = None,
+    ai: AIProvider | None = None,
+) -> list[dict]:
     findings: list[dict] = []
     title_pages: dict[str, list[str]] = defaultdict(list)
     desc_pages: dict[str, list[str]] = defaultdict(list)
     canonical_targets: dict[str, list[str]] = defaultdict(list)
 
+    root_page = pages[0] if pages else None
+    root_url = crawler.root_url if crawler else (root_page.final_url if root_page else "")
+    root_netloc = urlparse(root_url).netloc if root_url else ""
+    root_scheme = urlparse(root_url).scheme if root_url else "https"
+
+    # Global Site-Level Checks (llms.txt & AI Crawler Permissions)
+    if root_url and crawler:
+        # Check /llms.txt
+        llms_url = f"{root_scheme}://{root_netloc}/llms.txt"
+        try:
+            r_llms = crawler.session.get(llms_url, timeout=6.0)
+            if not r_llms.ok or len(r_llms.text.strip()) < 10:
+                findings.append(finding(
+                    metric="llms_txt_missing",
+                    page=llms_url,
+                    severity="low",
+                    evidence=f"No active /llms.txt found (HTTP status {r_llms.status_code if hasattr(r_llms, 'status_code') else 'error'}).",
+                    suggested_fix="Create an /llms.txt file to help AI search engines (Perplexity, SearchGPT, Gemini) index site knowledge.",
+                ))
+        except Exception:
+            pass
+
+        # Check robots.txt for AI bots
+        rp_text = getattr(crawler.robots, "default_useragent", "") or ""
+        try:
+            rp_res = crawler.session.get(f"{root_scheme}://{root_netloc}/robots.txt", timeout=6.0)
+            if rp_res.ok:
+                txt = rp_res.text
+                blocked_bots = []
+                for bot in ("GPTBot", "ClaudeBot", "PerplexityBot", "Google-Extended", "CCBot"):
+                    if re.search(rf"User-agent:\s*{bot}\b.*?Disallow:\s*/\s*(?:\n|$)", txt, re.I | re.DOTALL):
+                        blocked_bots.append(bot)
+                if blocked_bots:
+                    findings.append(finding(
+                        metric="ai_crawler_blocked",
+                        page=f"{root_scheme}://{root_netloc}/robots.txt",
+                        severity="medium",
+                        evidence=f"robots.txt explicitly blocks AI search crawlers: {', '.join(blocked_bots)}.",
+                        suggested_fix="Review robots.txt rules if visibility in AI answer engines (SearchGPT, Claude, Gemini) is desired.",
+                    ))
+        except Exception:
+            pass
+
+    # Page-by-Page Audit
     for p in pages:
+        # Check click depth
+        if p.depth > 3:
+            findings.append(finding(
+                metric="click_depth_high",
+                page=p.final_url,
+                severity="low",
+                evidence=f"Page is at click depth {p.depth} from homepage (recommended max is 3).",
+                suggested_fix="Improve internal linking hierarchy so important pages are accessible within 3 clicks of the root.",
+            ))
+
+        # Check redirect chains
+        if len(p.redirect_chain) > 1:
+            chain_str = " -> ".join(f"{h['status']} {h['url']}" for h in p.redirect_chain)
+            findings.append(finding(
+                metric="redirect_chain",
+                page=p.url,
+                severity="medium",
+                evidence=f"URL required {len(p.redirect_chain)} redirect hops: {chain_str}.",
+                suggested_fix="Update internal links to point directly to the destination URL to preserve crawl budget and link equity.",
+            ))
+
+        # Check orphan pages in sitemap
+        if crawler and p.url in crawler.sitemap_discovered_urls and p.depth > 0 and len(p.referrers) == 0:
+            findings.append(finding(
+                metric="orphan_page_in_sitemap",
+                page=p.final_url,
+                severity="medium",
+                evidence="URL was discovered in sitemap.xml but has zero internal links pointing to it from crawled pages.",
+                suggested_fix="Add internal contextual links to this page so users and search bots can discover it naturally.",
+            ))
+
         # 1. HTTP Status & Network Errors
         if not p.html or p.status >= 400 or p.status == 0:
             ref_info = f" Discovered via link on {p.referrers[0]}." if p.referrers else ""
@@ -56,7 +144,7 @@ def audit(pages: list[Page]) -> list[dict]:
                 metric="slow_server_response",
                 page=p.final_url,
                 severity="low",
-                evidence=f"Server response time was {p.response_time:.2f}s, exceeding the recommended 2.5s threshold.",
+                evidence=f"Server response time was {p.response_time:.2f}s, exceeding recommended 2.5s threshold.",
                 suggested_fix="Optimize server-side response times, implement caching, or use a CDN to reduce time to first byte.",
             ))
 
@@ -72,6 +160,34 @@ def audit(pages: list[Page]) -> list[dict]:
             ))
 
         soup = BeautifulSoup(p.html, "html.parser")
+
+        # DOM Size and Depth (INP & Render Performance)
+        all_tags = soup.find_all()
+        dom_node_count = len(all_tags)
+        if dom_node_count > 1500:
+            findings.append(finding(
+                metric="excessive_dom_size",
+                page=p.final_url,
+                severity="low",
+                evidence=f"Document contains {dom_node_count} DOM elements (recommended maximum is 1,500).",
+                suggested_fix="Simplify DOM structure and paginate long lists to improve Interaction to Next Paint (INP).",
+            ))
+
+        # Render-Blocking Resources in <head>
+        head_tag = soup.find("head")
+        if head_tag:
+            blocking_scripts = []
+            for s in head_tag.find_all("script", src=True):
+                if not s.get("async") and not s.get("defer") and s.get("type") != "module":
+                    blocking_scripts.append(s["src"][:60])
+            if blocking_scripts:
+                findings.append(finding(
+                    metric="render_blocking_script",
+                    page=p.final_url,
+                    severity="low",
+                    evidence=f"Found {len(blocking_scripts)} parser-blocking script(s) in <head>: {blocking_scripts[:2]!r}.",
+                    suggested_fix="Add 'defer' or 'async' attribute to non-critical scripts in <head> to improve First Contentful Paint.",
+                ))
 
         # 2. Language and Encoding
         html_tag = soup.find("html")
@@ -98,6 +214,7 @@ def audit(pages: list[Page]) -> list[dict]:
 
         # 3. Title Tag Checks
         title_tags = soup.find_all("title")
+        primary_title = ""
         if len(title_tags) == 0:
             findings.append(finding(
                 metric="title_missing",
@@ -132,7 +249,7 @@ def audit(pages: list[Page]) -> list[dict]:
                         page=p.final_url,
                         severity="low",
                         evidence=f'Title length is only {len(primary_title)} characters: "{primary_title}".',
-                        suggested_fix="Expand the title to between 30 and 60 characters to include relevant target keywords and brand identity.",
+                        suggested_fix="Expand the title to between 30 and 60 characters with target keywords and brand identity.",
                     ))
                 elif len(primary_title) > 60:
                     findings.append(finding(
@@ -140,7 +257,7 @@ def audit(pages: list[Page]) -> list[dict]:
                         page=p.final_url,
                         severity="low",
                         evidence=f'Title length is {len(primary_title)} characters (exceeds 60): "{primary_title}".',
-                        suggested_fix="Shorten title to under 60 characters to avoid truncation in search engine result pages (SERPs).",
+                        suggested_fix="Shorten title to under 60 characters to avoid truncation in search engine result pages.",
                     ))
 
         # 4. Meta Description Checks
@@ -220,7 +337,6 @@ def audit(pages: list[Page]) -> list[dict]:
                     suggested_fix="Add descriptive heading text inside the <h1> tag.",
                 ))
 
-        # Heading hierarchy skip check: h3 without h2
         h2_count = len(soup.find_all("h2"))
         h3_count = len(soup.find_all("h3"))
         if h3_count > 0 and h2_count == 0:
@@ -313,21 +429,34 @@ def audit(pages: list[Page]) -> list[dict]:
                     suggested_fix="Avoid restricting user zoom (user-scalable=no) to ensure accessibility standards are met.",
                 ))
 
-        # 9. Image Alt Attributes
+        # 9. Image Alt & CLS Dimensions
         images = soup.find_all("img")
         missing_alt = []
+        missing_dimensions = []
         for img in images:
             src = img.get("src") or img.get("data-src") or "unknown"
             if "alt" not in img.attrs:
                 missing_alt.append(src)
+            # Layout shift CLS check: image lacking width or height
+            if not (img.get("width") and img.get("height")) and not src.lower().endswith(".svg"):
+                missing_dimensions.append(src)
+
         if missing_alt:
-            sample = missing_alt[:3]
             findings.append(finding(
                 metric="image_alt_missing",
                 page=p.final_url,
                 severity="medium",
-                evidence=f"{len(missing_alt)} image(s) completely lack an 'alt' attribute. Sample src: {sample!r}.",
+                evidence=f"{len(missing_alt)} image(s) completely lack an 'alt' attribute. Sample src: {missing_alt[:2]!r}.",
                 suggested_fix="Add descriptive alt text to images for search engine image indexing and screen reader accessibility.",
+            ))
+
+        if len(missing_dimensions) > 3:
+            findings.append(finding(
+                metric="image_dimensions_missing",
+                page=p.final_url,
+                severity="low",
+                evidence=f"{len(missing_dimensions)} image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+                suggested_fix="Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts.",
             ))
 
         # 10. Links & Navigation Quality
@@ -350,7 +479,7 @@ def audit(pages: list[Page]) -> list[dict]:
                 page=p.final_url,
                 severity="low",
                 evidence=f"Found {len(js_links)} navigation link(s) using 'javascript:' protocol: {js_links[:2]!r}.",
-                suggested_fix="Replace javascript: pseudo-links with standard crawlable URLs or use button elements for script interactions.",
+                suggested_fix="Replace javascript: pseudo-links with standard crawlable URLs or use button elements.",
             ))
 
         if empty_links > 3:
@@ -367,7 +496,7 @@ def audit(pages: list[Page]) -> list[dict]:
                 metric="mixed_content_link",
                 page=p.final_url,
                 severity="low",
-                evidence=f"HTTPS page contains {len(mixed_content_links)} insecure HTTP internal/external link(s): {mixed_content_links[:2]!r}.",
+                evidence=f"HTTPS page contains {len(mixed_content_links)} insecure HTTP link(s): {mixed_content_links[:2]!r}.",
                 suggested_fix="Upgrade insecure http:// URLs to https:// to maintain end-to-end transport security.",
             ))
 
@@ -381,7 +510,7 @@ def audit(pages: list[Page]) -> list[dict]:
                 page=p.final_url,
                 severity="low",
                 evidence=f"Page contains approximately {len(words)} visible words, which may signal thin content to search engines.",
-                suggested_fix="Expand the page copy with substantive, original content that satisfies the target search intent.",
+                suggested_fix="Expand the page copy with substantive, original content that satisfies target search intent.",
             ))
 
         # 12. Open Graph & Social Signals
@@ -431,7 +560,7 @@ def audit(pages: list[Page]) -> list[dict]:
                         suggested_fix="Ensure all hreflang alternate links use fully-qualified absolute URLs.",
                     ))
 
-    # 15. Cross-Page Site-Wide Duplicate Title & Meta Description Checks
+    # 15. Sitewide Duplicate Title & Meta Description Checks
     for title, urls in title_pages.items():
         if title and len(urls) > 1:
             for u in urls:
@@ -439,7 +568,7 @@ def audit(pages: list[Page]) -> list[dict]:
                     metric="duplicate_title",
                     page=u,
                     severity="medium",
-                    evidence=f'Title "{title}" is identical across {len(urls)} crawled pages (e.g. {urls[:3]!r}).',
+                    evidence=f'Title "{title}" is identical across {len(urls)} crawled pages (e.g. {urls[:2]!r}).',
                     suggested_fix="Provide each page with a distinctive, descriptive title to prevent internal keyword cannibalization.",
                 ))
 
@@ -450,17 +579,54 @@ def audit(pages: list[Page]) -> list[dict]:
                     metric="duplicate_meta_description",
                     page=u,
                     severity="low",
-                    evidence=f'Meta description "{desc[:60]}..." is duplicated across {len(urls)} pages.',
+                    evidence=f'Meta description "{desc[:50]}..." is duplicated across {len(urls)} pages.',
                     suggested_fix="Write unique meta descriptions tailored to the specific content and purpose of each page.",
                 ))
+
+    # 16. Optional AI Fix Enhancement Layer
+    if ai and ai.is_available:
+        ai_enhanced_count = 0
+        max_ai_enhancements = 8  # Keep audit snappy and respect rate limits
+        for f_item in findings:
+            if ai_enhanced_count >= max_ai_enhancements:
+                break
+            # Enhance high-value fixes like missing title, meta descriptions, schema, or headings
+            if f_item["metric"] in ("meta_description_missing", "structured_data_missing", "title_missing", "heading_hierarchy_skip"):
+                # Find matching page text
+                p_match = next((p for p in pages if p.final_url == f_item["page"]), None)
+                p_text = visible_text(BeautifulSoup(p_match.html, "html.parser")) if p_match and p_match.html else ""
+                p_title = ""
+                if p_match and p_match.html:
+                    s_tmp = BeautifulSoup(p_match.html, "html.parser")
+                    p_title = s_tmp.title.get_text(strip=True) if s_tmp.title else ""
+
+                enhanced = ai.enhance_suggested_fix(
+                    metric=f_item["metric"],
+                    evidence=f_item["evidence"],
+                    page_title=p_title,
+                    page_snippet=p_text[:400],
+                    default_fix=f_item["suggested_fix"],
+                )
+                if enhanced and enhanced != f_item["suggested_fix"]:
+                    f_item["suggested_fix"] = enhanced
+                    ai_enhanced_count += 1
 
     return findings
 
 
-def run(url: str, output: str, max_pages: int = 150, timeout: float = 12.0, concurrency: int = 5) -> list[dict]:
+def run(
+    url: str,
+    output: str,
+    max_pages: int = 150,
+    timeout: float = 12.0,
+    concurrency: int = 5,
+    ai_provider: ProviderType = "auto",
+    ai_model: str | None = None,
+) -> list[dict]:
+    ai = AIProvider(provider=ai_provider, model=ai_model)
     crawler = SiteCrawler(url, max_pages=max_pages, timeout=timeout, concurrency=concurrency)
     pages = crawler.crawl()
-    result = audit(pages)
+    result = audit(pages, crawler=crawler, ai=ai)
     with open(output, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2, ensure_ascii=False)
     return result

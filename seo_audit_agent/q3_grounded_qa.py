@@ -8,8 +8,8 @@ from typing import TypedDict
 
 from bs4 import BeautifulSoup
 
+from .ai_provider import AIProvider, ProviderType
 from .crawler import SiteCrawler
-
 
 # Comprehensive stopword list for English query filtering
 STOPWORDS = {
@@ -80,7 +80,6 @@ def extract_passages_from_html(html: str) -> list[str]:
     headings = soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6", "dt"])
     for h in headings:
         h_text = h.get_text(" ", strip=True)
-        # Find next sibling with content
         nxt = h.find_next_sibling(["p", "ul", "ol", "dd", "div"])
         if nxt and h_text:
             nxt_text = nxt.get_text(" ", strip=True)
@@ -102,7 +101,6 @@ def extract_passages_from_html(html: str) -> list[str]:
 
     # 3. Leaf block containers (e.g. alert divs, callout banners, cards without nested blocks)
     for el in soup.find_all(["div", "article", "section", "aside"]):
-        # Only take leaf containers that don't contain other nested paragraphs or sections
         if not el.find_all(["div", "p", "ul", "ol", "table", "article", "section"]):
             raw_text = el.get_text(" ", strip=True)
             clean_text = re.sub(r"\s+", " ", raw_text).strip()
@@ -165,7 +163,15 @@ def compute_bm25_and_coverage(
     return score, coverage
 
 
-def answer(url: str, query: str, max_pages: int = 150, timeout: float = 12.0, concurrency: int = 5) -> AnswerResult:
+def answer(
+    url: str,
+    query: str,
+    max_pages: int = 150,
+    timeout: float = 12.0,
+    concurrency: int = 5,
+    ai_provider: ProviderType = "auto",
+    ai_model: str | None = None,
+) -> AnswerResult:
     clean_query = query.strip()
     q_tokens = extract_query_tokens(clean_query)
 
@@ -195,33 +201,51 @@ def answer(url: str, query: str, max_pages: int = 150, timeout: float = 12.0, co
     total_docs = len(documents)
     avg_doc_len = sum(d.length for d in documents) / total_docs
 
-    best_doc: PassageDoc | None = None
-    best_score = -1.0
-    best_coverage = 0.0
-
+    # Rank all candidate documents with BM25
+    ranked_candidates: list[tuple[PassageDoc, float, float]] = []
     for doc in documents:
         score, coverage = compute_bm25_and_coverage(q_tokens, doc, doc_freqs, total_docs, avg_doc_len)
-        if score > best_score:
-            best_score = score
-            best_coverage = coverage
-            best_doc = doc
+        if score > 0.5:
+            ranked_candidates.append((doc, score, coverage))
 
-    # Grounding verification: require sufficient keyword coverage & BM25 score
+    ranked_candidates.sort(key=lambda x: x[1], reverse=True)
+
+    # Optional AI Verification & Refinement Layer
+    ai = AIProvider(provider=ai_provider, model=ai_model)
+    if ai.is_available and ranked_candidates:
+        candidate_triplets = [(doc.url, doc.text, sc) for doc, sc, _ in ranked_candidates[:5]]
+        ai_res = ai.verify_and_refine_answer(clean_query, candidate_triplets)
+        if ai_res is not None:
+            chosen_url, chosen_text = ai_res
+            if chosen_url and chosen_text:
+                return {
+                    "query": clean_query,
+                    "url": chosen_url,
+                    "excerpt": chosen_text,
+                }
+            else:
+                # AI verified refusal
+                return {
+                    "query": clean_query,
+                    "url": None,
+                    "excerpt": None,
+                }
+        # If AI returned None (error/timeout), code seamlessly falls through to deterministic fallback!
+
+    # Deterministic manual fallback logic
     min_coverage_threshold = 0.50 if len(q_tokens) >= 2 else 1.0
     min_bm25_threshold = 1.8
 
-    if (
-        best_doc is not None
-        and best_coverage >= min_coverage_threshold
-        and best_score >= min_bm25_threshold
-    ):
-        return {
-            "query": clean_query,
-            "url": best_doc.url,
-            "excerpt": best_doc.text,
-        }
+    if ranked_candidates:
+        best_doc, best_score, best_cov = ranked_candidates[0]
+        if best_cov >= min_coverage_threshold and best_score >= min_bm25_threshold:
+            return {
+                "query": clean_query,
+                "url": best_doc.url,
+                "excerpt": best_doc.text,
+            }
 
-    # Strict refusal to guess: return null when unsupported by the site markup
+    # Strict refusal to guess
     return {
         "query": clean_query,
         "url": None,
@@ -229,8 +253,25 @@ def answer(url: str, query: str, max_pages: int = 150, timeout: float = 12.0, co
     }
 
 
-def run(url: str, query: str, output: str, max_pages: int = 150, timeout: float = 12.0, concurrency: int = 5) -> AnswerResult:
-    result = answer(url, query, max_pages=max_pages, timeout=timeout, concurrency=concurrency)
+def run(
+    url: str,
+    query: str,
+    output: str,
+    max_pages: int = 150,
+    timeout: float = 12.0,
+    concurrency: int = 5,
+    ai_provider: ProviderType = "auto",
+    ai_model: str | None = None,
+) -> AnswerResult:
+    result = answer(
+        url,
+        query,
+        max_pages=max_pages,
+        timeout=timeout,
+        concurrency=concurrency,
+        ai_provider=ai_provider,
+        ai_model=ai_model,
+    )
     with open(output, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2, ensure_ascii=False)
     return result

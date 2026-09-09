@@ -27,6 +27,8 @@ class Page:
     headers: dict[str, str] = field(default_factory=dict)
     response_time: float = 0.0
     referrers: list[str] = field(default_factory=list)
+    depth: int = 0
+    redirect_chain: list[dict[str, str | int]] = field(default_factory=list)
 
 
 def normalize_url(url: str, base: str | None = None) -> str:
@@ -47,7 +49,6 @@ def normalize_url(url: str, base: str | None = None) -> str:
         port = None
     netloc = host if port is None else f"{host}:{port}"
     path = p.path or "/"
-    # Clean redundant trailing dots or slashes where reasonable, keep root as /
     path = re.sub(r"/+", "/", path)
     return urlunparse((scheme, netloc, path, "", p.query, ""))
 
@@ -157,7 +158,6 @@ def sitemap_urls(session: requests.Session, root: str, timeout: float = 10.0, ma
             u = normalize_url(loc.get_text(strip=True))
             if not u or not same_site(u, root):
                 continue
-            # Check if this loc points to another sitemap
             if soup.find("sitemap") and loc.parent and loc.parent.name == "sitemap":
                 queue.append(u)
             else:
@@ -186,6 +186,7 @@ class SiteCrawler:
         self.robots = load_robots(self.session, self.root_url)
         self._lock = threading.Lock()
         self.referrers: dict[str, list[str]] = {}
+        self.sitemap_discovered_urls: set[str] = set()
 
     def allowed(self, url: str) -> bool:
         try:
@@ -195,7 +196,7 @@ class SiteCrawler:
         except Exception:
             return True
 
-    def fetch(self, url: str) -> Page | None:
+    def fetch(self, url: str, depth: int = 0) -> Page | None:
         if not self.allowed(url):
             return None
         t0 = time.perf_counter()
@@ -215,11 +216,18 @@ class SiteCrawler:
                 headers={},
                 response_time=round(elapsed, 3),
                 referrers=refs,
+                depth=depth,
             )
 
         ctype = r.headers.get("content-type", "").split(";")[0].strip().lower()
         headers_dict = {k.lower(): v for k, v in r.headers.items()}
         refs = self.referrers.get(url, [])
+
+        # Inspect redirect chain
+        redirect_chain = []
+        if hasattr(r, "history") and r.history:
+            for hop in r.history:
+                redirect_chain.append({"status": hop.status_code, "url": hop.url})
 
         if ctype not in HTML_TYPES:
             return Page(
@@ -231,6 +239,8 @@ class SiteCrawler:
                 headers=headers_dict,
                 response_time=round(elapsed, 3),
                 referrers=refs,
+                depth=depth,
+                redirect_chain=redirect_chain,
             )
 
         return Page(
@@ -242,44 +252,51 @@ class SiteCrawler:
             headers=headers_dict,
             response_time=round(elapsed, 3),
             referrers=refs,
+            depth=depth,
+            redirect_chain=redirect_chain,
         )
 
     def crawl(self) -> list[Page]:
-        # Collect initial seed URLs
+        # Collect sitemaps and cache discovered URLs
         sitemap_seeds = sitemap_urls(
             self.session, self.root_url, self.timeout, max_urls=max(self.max_pages * 2, 200)
         )
+        self.sitemap_discovered_urls = set(sitemap_seeds)
+
         seeds = [self.root_url] + [u for u in sitemap_seeds if same_site(u, self.root_url)]
         seeds = list(dict.fromkeys(seeds))
 
-        # Track frontier and visited URLs
+        # BFS queue stores (url, depth)
         visited: set[str] = set()
         queued: set[str] = set(seeds)
         pages: list[Page] = []
-        frontier = deque(sorted(seeds, key=url_priority_score, reverse=True))
+
+        # Root has depth 0; sitemap seeds have depth 1
+        initial_items = [(u, 0 if u == self.root_url else 1) for u in seeds]
+        initial_items.sort(key=lambda item: url_priority_score(item[0]), reverse=True)
+        frontier = deque(initial_items)
 
         with ThreadPoolExecutor(max_workers=self.concurrency) as executor:
             active_futures = {}
 
             def submit_next():
                 while frontier and len(pages) + len(active_futures) < self.max_pages:
-                    url = frontier.popleft()
+                    url, depth = frontier.popleft()
                     if url not in visited:
                         visited.add(url)
-                        fut = executor.submit(self.fetch, url)
-                        active_futures[fut] = url
+                        fut = executor.submit(self.fetch, url, depth)
+                        active_futures[fut] = (url, depth)
 
             submit_next()
 
             while active_futures and len(pages) < self.max_pages:
-                # Wait for any future to complete
                 done = []
                 for fut in as_completed(active_futures):
                     done.append(fut)
-                    break  # Process one by one for responsiveness
+                    break
 
                 for fut in done:
-                    orig_url = active_futures.pop(fut)
+                    orig_url, depth = active_futures.pop(fut)
                     try:
                         page = fut.result()
                     except Exception as e:
@@ -291,6 +308,7 @@ class SiteCrawler:
                             final_url=orig_url,
                             error=str(e),
                             referrers=self.referrers.get(orig_url, []),
+                            depth=depth,
                         )
 
                     if page is not None:
@@ -304,15 +322,13 @@ class SiteCrawler:
                                 for a in soup.find_all("a", href=True):
                                     nxt = normalize_url(a["href"], page.final_url)
                                     if nxt and same_site(nxt, self.root_url) and is_crawlable_link(nxt):
-                                        # Record referrer for internal link graph
                                         with self._lock:
                                             if page.final_url not in self.referrers.setdefault(nxt, []):
                                                 self.referrers[nxt].append(page.final_url)
                                         if nxt not in visited and nxt not in queued:
                                             queued.add(nxt)
-                                            new_links.append(nxt)
-                                # Sort newly discovered links by priority
-                                new_links.sort(key=url_priority_score, reverse=True)
+                                            new_links.append((nxt, depth + 1))
+                                new_links.sort(key=lambda item: url_priority_score(item[0]), reverse=True)
                                 frontier.extend(new_links)
                             except Exception:
                                 pass
@@ -322,7 +338,6 @@ class SiteCrawler:
 
                     submit_next()
 
-        # Update referrers on all page objects
         for p in pages:
             if not p.referrers and p.url in self.referrers:
                 p.referrers = self.referrers[p.url]

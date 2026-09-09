@@ -1,5 +1,12 @@
 [
   {
+    "metric": "llms_txt_missing",
+    "page": "https://books.toscrape.com/llms.txt",
+    "severity": "low",
+    "evidence": "No active /llms.txt found (HTTP status 404).",
+    "suggested_fix": "Create an /llms.txt file to help AI search engines (Perplexity, SearchGPT, Gemini) index site knowledge."
+  },
+  {
     "metric": "meta_description_empty",
     "page": "https://books.toscrape.com/",
     "severity": "medium",
@@ -19,6 +26,13 @@
     "severity": "medium",
     "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
     "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
+  },
+  {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/",
+    "severity": "low",
+    "evidence": "20 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
   },
   {
     "metric": "open_graph_title_missing",
@@ -43,35 +57,42 @@
   },
   {
     "metric": "meta_description_empty",
-    "page": "https://books.toscrape.com/catalogue/category/books/self-help_41/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/travel_2/index.html",
     "severity": "medium",
     "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
     "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
   },
   {
     "metric": "heading_hierarchy_skip",
-    "page": "https://books.toscrape.com/catalogue/category/books/self-help_41/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/travel_2/index.html",
     "severity": "low",
-    "evidence": "Document contains 5 <h3> elements but no <h2> elements.",
+    "evidence": "Document contains 11 <h3> elements but no <h2> elements.",
     "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
   },
   {
     "metric": "canonical_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/self-help_41/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/travel_2/index.html",
     "severity": "medium",
     "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
     "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
   },
   {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/travel_2/index.html",
+    "severity": "low",
+    "evidence": "11 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
     "metric": "open_graph_title_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/self-help_41/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/travel_2/index.html",
     "severity": "low",
     "evidence": "No Open Graph <meta property=\"og:title\"> found.",
     "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
   },
   {
     "metric": "open_graph_image_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/self-help_41/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/travel_2/index.html",
     "severity": "low",
     "evidence": "No Open Graph <meta property=\"og:image\"> found.",
     "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
@@ -98,6 +119,13 @@
     "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
   },
   {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html",
+    "severity": "low",
+    "evidence": "20 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
     "metric": "open_graph_title_missing",
     "page": "https://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html",
     "severity": "low",
@@ -131,6 +159,13 @@
     "severity": "medium",
     "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
     "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
+  },
+  {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html",
+    "severity": "low",
+    "evidence": "20 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
   },
   {
     "metric": "open_graph_title_missing",
@@ -168,6 +203,13 @@
     "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
   },
   {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/classics_6/index.html",
+    "severity": "low",
+    "evidence": "19 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
     "metric": "open_graph_title_missing",
     "page": "https://books.toscrape.com/catalogue/category/books/classics_6/index.html",
     "severity": "low",
@@ -183,105 +225,42 @@
   },
   {
     "metric": "meta_description_empty",
-    "page": "https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/self-help_41/index.html",
     "severity": "medium",
     "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
     "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
   },
   {
     "metric": "heading_hierarchy_skip",
-    "page": "https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/self-help_41/index.html",
     "severity": "low",
-    "evidence": "Document contains 11 <h3> elements but no <h2> elements.",
+    "evidence": "Document contains 5 <h3> elements but no <h2> elements.",
     "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
   },
   {
     "metric": "canonical_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/self-help_41/index.html",
     "severity": "medium",
     "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
     "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
   },
   {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/self-help_41/index.html",
+    "severity": "low",
+    "evidence": "5 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
     "metric": "open_graph_title_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/self-help_41/index.html",
     "severity": "low",
     "evidence": "No Open Graph <meta property=\"og:title\"> found.",
     "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
   },
   {
     "metric": "open_graph_image_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html",
-    "severity": "low",
-    "evidence": "No Open Graph <meta property=\"og:image\"> found.",
-    "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
-  },
-  {
-    "metric": "meta_description_empty",
-    "page": "https://books.toscrape.com/catalogue/category/books/romance_8/index.html",
-    "severity": "medium",
-    "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
-    "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
-  },
-  {
-    "metric": "heading_hierarchy_skip",
-    "page": "https://books.toscrape.com/catalogue/category/books/romance_8/index.html",
-    "severity": "low",
-    "evidence": "Document contains 20 <h3> elements but no <h2> elements.",
-    "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
-  },
-  {
-    "metric": "canonical_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/romance_8/index.html",
-    "severity": "medium",
-    "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
-    "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
-  },
-  {
-    "metric": "open_graph_title_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/romance_8/index.html",
-    "severity": "low",
-    "evidence": "No Open Graph <meta property=\"og:title\"> found.",
-    "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
-  },
-  {
-    "metric": "open_graph_image_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/romance_8/index.html",
-    "severity": "low",
-    "evidence": "No Open Graph <meta property=\"og:image\"> found.",
-    "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
-  },
-  {
-    "metric": "meta_description_empty",
-    "page": "https://books.toscrape.com/catalogue/category/books_1/index.html",
-    "severity": "medium",
-    "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
-    "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
-  },
-  {
-    "metric": "heading_hierarchy_skip",
-    "page": "https://books.toscrape.com/catalogue/category/books_1/index.html",
-    "severity": "low",
-    "evidence": "Document contains 20 <h3> elements but no <h2> elements.",
-    "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
-  },
-  {
-    "metric": "canonical_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books_1/index.html",
-    "severity": "medium",
-    "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
-    "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
-  },
-  {
-    "metric": "open_graph_title_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books_1/index.html",
-    "severity": "low",
-    "evidence": "No Open Graph <meta property=\"og:title\"> found.",
-    "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
-  },
-  {
-    "metric": "open_graph_image_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books_1/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/self-help_41/index.html",
     "severity": "low",
     "evidence": "No Open Graph <meta property=\"og:image\"> found.",
     "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
@@ -306,6 +285,13 @@
     "severity": "medium",
     "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
     "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
+  },
+  {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/index.html",
+    "severity": "low",
+    "evidence": "20 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
   },
   {
     "metric": "open_graph_title_missing",
@@ -343,6 +329,13 @@
     "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
   },
   {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/mystery_3/index.html",
+    "severity": "low",
+    "evidence": "20 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
     "metric": "open_graph_title_missing",
     "page": "https://books.toscrape.com/catalogue/category/books/mystery_3/index.html",
     "severity": "low",
@@ -352,6 +345,174 @@
   {
     "metric": "open_graph_image_missing",
     "page": "https://books.toscrape.com/catalogue/category/books/mystery_3/index.html",
+    "severity": "low",
+    "evidence": "No Open Graph <meta property=\"og:image\"> found.",
+    "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
+  },
+  {
+    "metric": "meta_description_empty",
+    "page": "https://books.toscrape.com/catalogue/category/books_1/index.html",
+    "severity": "medium",
+    "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
+    "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
+  },
+  {
+    "metric": "heading_hierarchy_skip",
+    "page": "https://books.toscrape.com/catalogue/category/books_1/index.html",
+    "severity": "low",
+    "evidence": "Document contains 20 <h3> elements but no <h2> elements.",
+    "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
+  },
+  {
+    "metric": "canonical_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books_1/index.html",
+    "severity": "medium",
+    "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
+    "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
+  },
+  {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books_1/index.html",
+    "severity": "low",
+    "evidence": "20 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
+    "metric": "open_graph_title_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books_1/index.html",
+    "severity": "low",
+    "evidence": "No Open Graph <meta property=\"og:title\"> found.",
+    "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
+  },
+  {
+    "metric": "open_graph_image_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books_1/index.html",
+    "severity": "low",
+    "evidence": "No Open Graph <meta property=\"og:image\"> found.",
+    "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
+  },
+  {
+    "metric": "meta_description_empty",
+    "page": "https://books.toscrape.com/catalogue/category/books/childrens_11/index.html",
+    "severity": "medium",
+    "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
+    "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
+  },
+  {
+    "metric": "heading_hierarchy_skip",
+    "page": "https://books.toscrape.com/catalogue/category/books/childrens_11/index.html",
+    "severity": "low",
+    "evidence": "Document contains 20 <h3> elements but no <h2> elements.",
+    "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
+  },
+  {
+    "metric": "canonical_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/childrens_11/index.html",
+    "severity": "medium",
+    "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
+    "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
+  },
+  {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/childrens_11/index.html",
+    "severity": "low",
+    "evidence": "20 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
+    "metric": "open_graph_title_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/childrens_11/index.html",
+    "severity": "low",
+    "evidence": "No Open Graph <meta property=\"og:title\"> found.",
+    "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
+  },
+  {
+    "metric": "open_graph_image_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/childrens_11/index.html",
+    "severity": "low",
+    "evidence": "No Open Graph <meta property=\"og:image\"> found.",
+    "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
+  },
+  {
+    "metric": "meta_description_empty",
+    "page": "https://books.toscrape.com/catalogue/category/books/romance_8/index.html",
+    "severity": "medium",
+    "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
+    "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
+  },
+  {
+    "metric": "heading_hierarchy_skip",
+    "page": "https://books.toscrape.com/catalogue/category/books/romance_8/index.html",
+    "severity": "low",
+    "evidence": "Document contains 20 <h3> elements but no <h2> elements.",
+    "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
+  },
+  {
+    "metric": "canonical_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/romance_8/index.html",
+    "severity": "medium",
+    "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
+    "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
+  },
+  {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/romance_8/index.html",
+    "severity": "low",
+    "evidence": "20 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
+    "metric": "open_graph_title_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/romance_8/index.html",
+    "severity": "low",
+    "evidence": "No Open Graph <meta property=\"og:title\"> found.",
+    "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
+  },
+  {
+    "metric": "open_graph_image_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/romance_8/index.html",
+    "severity": "low",
+    "evidence": "No Open Graph <meta property=\"og:image\"> found.",
+    "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
+  },
+  {
+    "metric": "meta_description_empty",
+    "page": "https://books.toscrape.com/catalogue/category/books/fiction_10/index.html",
+    "severity": "medium",
+    "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
+    "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
+  },
+  {
+    "metric": "heading_hierarchy_skip",
+    "page": "https://books.toscrape.com/catalogue/category/books/fiction_10/index.html",
+    "severity": "low",
+    "evidence": "Document contains 20 <h3> elements but no <h2> elements.",
+    "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
+  },
+  {
+    "metric": "canonical_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/fiction_10/index.html",
+    "severity": "medium",
+    "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
+    "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
+  },
+  {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/fiction_10/index.html",
+    "severity": "low",
+    "evidence": "20 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
+    "metric": "open_graph_title_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/fiction_10/index.html",
+    "severity": "low",
+    "evidence": "No Open Graph <meta property=\"og:title\"> found.",
+    "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
+  },
+  {
+    "metric": "open_graph_image_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/fiction_10/index.html",
     "severity": "low",
     "evidence": "No Open Graph <meta property=\"og:image\"> found.",
     "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
@@ -378,6 +539,13 @@
     "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
   },
   {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/womens-fiction_9/index.html",
+    "severity": "low",
+    "evidence": "17 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
     "metric": "open_graph_title_missing",
     "page": "https://books.toscrape.com/catalogue/category/books/womens-fiction_9/index.html",
     "severity": "low",
@@ -387,41 +555,6 @@
   {
     "metric": "open_graph_image_missing",
     "page": "https://books.toscrape.com/catalogue/category/books/womens-fiction_9/index.html",
-    "severity": "low",
-    "evidence": "No Open Graph <meta property=\"og:image\"> found.",
-    "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
-  },
-  {
-    "metric": "meta_description_empty",
-    "page": "https://books.toscrape.com/catalogue/category/books/nonfiction_13/index.html",
-    "severity": "medium",
-    "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
-    "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
-  },
-  {
-    "metric": "heading_hierarchy_skip",
-    "page": "https://books.toscrape.com/catalogue/category/books/nonfiction_13/index.html",
-    "severity": "low",
-    "evidence": "Document contains 20 <h3> elements but no <h2> elements.",
-    "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
-  },
-  {
-    "metric": "canonical_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/nonfiction_13/index.html",
-    "severity": "medium",
-    "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
-    "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
-  },
-  {
-    "metric": "open_graph_title_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/nonfiction_13/index.html",
-    "severity": "low",
-    "evidence": "No Open Graph <meta property=\"og:title\"> found.",
-    "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
-  },
-  {
-    "metric": "open_graph_image_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/nonfiction_13/index.html",
     "severity": "low",
     "evidence": "No Open Graph <meta property=\"og:image\"> found.",
     "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
@@ -448,6 +581,13 @@
     "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
   },
   {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/religion_12/index.html",
+    "severity": "low",
+    "evidence": "7 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
     "metric": "open_graph_title_missing",
     "page": "https://books.toscrape.com/catalogue/category/books/religion_12/index.html",
     "severity": "low",
@@ -457,76 +597,6 @@
   {
     "metric": "open_graph_image_missing",
     "page": "https://books.toscrape.com/catalogue/category/books/religion_12/index.html",
-    "severity": "low",
-    "evidence": "No Open Graph <meta property=\"og:image\"> found.",
-    "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
-  },
-  {
-    "metric": "meta_description_empty",
-    "page": "https://books.toscrape.com/catalogue/category/books/fiction_10/index.html",
-    "severity": "medium",
-    "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
-    "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
-  },
-  {
-    "metric": "heading_hierarchy_skip",
-    "page": "https://books.toscrape.com/catalogue/category/books/fiction_10/index.html",
-    "severity": "low",
-    "evidence": "Document contains 20 <h3> elements but no <h2> elements.",
-    "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
-  },
-  {
-    "metric": "canonical_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/fiction_10/index.html",
-    "severity": "medium",
-    "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
-    "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
-  },
-  {
-    "metric": "open_graph_title_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/fiction_10/index.html",
-    "severity": "low",
-    "evidence": "No Open Graph <meta property=\"og:title\"> found.",
-    "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
-  },
-  {
-    "metric": "open_graph_image_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/fiction_10/index.html",
-    "severity": "low",
-    "evidence": "No Open Graph <meta property=\"og:image\"> found.",
-    "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
-  },
-  {
-    "metric": "meta_description_empty",
-    "page": "https://books.toscrape.com/catalogue/category/books/music_14/index.html",
-    "severity": "medium",
-    "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
-    "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
-  },
-  {
-    "metric": "heading_hierarchy_skip",
-    "page": "https://books.toscrape.com/catalogue/category/books/music_14/index.html",
-    "severity": "low",
-    "evidence": "Document contains 13 <h3> elements but no <h2> elements.",
-    "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
-  },
-  {
-    "metric": "canonical_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/music_14/index.html",
-    "severity": "medium",
-    "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
-    "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
-  },
-  {
-    "metric": "open_graph_title_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/music_14/index.html",
-    "severity": "low",
-    "evidence": "No Open Graph <meta property=\"og:title\"> found.",
-    "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
-  },
-  {
-    "metric": "open_graph_image_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/music_14/index.html",
     "severity": "low",
     "evidence": "No Open Graph <meta property=\"og:image\"> found.",
     "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
@@ -553,6 +623,13 @@
     "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
   },
   {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/science-fiction_16/index.html",
+    "severity": "low",
+    "evidence": "16 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
     "metric": "open_graph_title_missing",
     "page": "https://books.toscrape.com/catalogue/category/books/science-fiction_16/index.html",
     "severity": "low",
@@ -562,41 +639,6 @@
   {
     "metric": "open_graph_image_missing",
     "page": "https://books.toscrape.com/catalogue/category/books/science-fiction_16/index.html",
-    "severity": "low",
-    "evidence": "No Open Graph <meta property=\"og:image\"> found.",
-    "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
-  },
-  {
-    "metric": "meta_description_empty",
-    "page": "https://books.toscrape.com/catalogue/category/books/default_15/index.html",
-    "severity": "medium",
-    "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
-    "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
-  },
-  {
-    "metric": "heading_hierarchy_skip",
-    "page": "https://books.toscrape.com/catalogue/category/books/default_15/index.html",
-    "severity": "low",
-    "evidence": "Document contains 20 <h3> elements but no <h2> elements.",
-    "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
-  },
-  {
-    "metric": "canonical_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/default_15/index.html",
-    "severity": "medium",
-    "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
-    "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
-  },
-  {
-    "metric": "open_graph_title_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/default_15/index.html",
-    "severity": "low",
-    "evidence": "No Open Graph <meta property=\"og:title\"> found.",
-    "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
-  },
-  {
-    "metric": "open_graph_image_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/default_15/index.html",
     "severity": "low",
     "evidence": "No Open Graph <meta property=\"og:image\"> found.",
     "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
@@ -623,6 +665,13 @@
     "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
   },
   {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/sports-and-games_17/index.html",
+    "severity": "low",
+    "evidence": "5 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
     "metric": "open_graph_title_missing",
     "page": "https://books.toscrape.com/catalogue/category/books/sports-and-games_17/index.html",
     "severity": "low",
@@ -638,112 +687,168 @@
   },
   {
     "metric": "meta_description_empty",
-    "page": "https://books.toscrape.com/catalogue/category/books/fantasy_19/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html",
     "severity": "medium",
     "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
     "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
   },
   {
     "metric": "heading_hierarchy_skip",
-    "page": "https://books.toscrape.com/catalogue/category/books/fantasy_19/index.html",
-    "severity": "low",
-    "evidence": "Document contains 20 <h3> elements but no <h2> elements.",
-    "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
-  },
-  {
-    "metric": "canonical_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/fantasy_19/index.html",
-    "severity": "medium",
-    "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
-    "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
-  },
-  {
-    "metric": "open_graph_title_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/fantasy_19/index.html",
-    "severity": "low",
-    "evidence": "No Open Graph <meta property=\"og:title\"> found.",
-    "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
-  },
-  {
-    "metric": "open_graph_image_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/fantasy_19/index.html",
-    "severity": "low",
-    "evidence": "No Open Graph <meta property=\"og:image\"> found.",
-    "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
-  },
-  {
-    "metric": "slow_server_response",
-    "page": "https://books.toscrape.com/catalogue/category/books/travel_2/index.html",
-    "severity": "low",
-    "evidence": "Server response time was 2.72s, exceeding the recommended 2.5s threshold.",
-    "suggested_fix": "Optimize server-side response times, implement caching, or use a CDN to reduce time to first byte."
-  },
-  {
-    "metric": "meta_description_empty",
-    "page": "https://books.toscrape.com/catalogue/category/books/travel_2/index.html",
-    "severity": "medium",
-    "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
-    "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
-  },
-  {
-    "metric": "heading_hierarchy_skip",
-    "page": "https://books.toscrape.com/catalogue/category/books/travel_2/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html",
     "severity": "low",
     "evidence": "Document contains 11 <h3> elements but no <h2> elements.",
     "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
   },
   {
     "metric": "canonical_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/travel_2/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html",
     "severity": "medium",
     "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
     "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
   },
   {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html",
+    "severity": "low",
+    "evidence": "11 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
     "metric": "open_graph_title_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/travel_2/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html",
     "severity": "low",
     "evidence": "No Open Graph <meta property=\"og:title\"> found.",
     "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
   },
   {
     "metric": "open_graph_image_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/travel_2/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html",
     "severity": "low",
     "evidence": "No Open Graph <meta property=\"og:image\"> found.",
     "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
   },
   {
     "metric": "meta_description_empty",
-    "page": "https://books.toscrape.com/catalogue/category/books/add-a-comment_18/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/nonfiction_13/index.html",
     "severity": "medium",
     "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
     "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
   },
   {
     "metric": "heading_hierarchy_skip",
-    "page": "https://books.toscrape.com/catalogue/category/books/add-a-comment_18/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/nonfiction_13/index.html",
     "severity": "low",
     "evidence": "Document contains 20 <h3> elements but no <h2> elements.",
     "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
   },
   {
     "metric": "canonical_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/add-a-comment_18/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/nonfiction_13/index.html",
     "severity": "medium",
     "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
     "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
   },
   {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/nonfiction_13/index.html",
+    "severity": "low",
+    "evidence": "20 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
     "metric": "open_graph_title_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/add-a-comment_18/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/nonfiction_13/index.html",
     "severity": "low",
     "evidence": "No Open Graph <meta property=\"og:title\"> found.",
     "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
   },
   {
     "metric": "open_graph_image_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/add-a-comment_18/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/nonfiction_13/index.html",
+    "severity": "low",
+    "evidence": "No Open Graph <meta property=\"og:image\"> found.",
+    "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
+  },
+  {
+    "metric": "meta_description_empty",
+    "page": "https://books.toscrape.com/catalogue/category/books/fantasy_19/index.html",
+    "severity": "medium",
+    "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
+    "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
+  },
+  {
+    "metric": "heading_hierarchy_skip",
+    "page": "https://books.toscrape.com/catalogue/category/books/fantasy_19/index.html",
+    "severity": "low",
+    "evidence": "Document contains 20 <h3> elements but no <h2> elements.",
+    "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
+  },
+  {
+    "metric": "canonical_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/fantasy_19/index.html",
+    "severity": "medium",
+    "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
+    "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
+  },
+  {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/fantasy_19/index.html",
+    "severity": "low",
+    "evidence": "20 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
+    "metric": "open_graph_title_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/fantasy_19/index.html",
+    "severity": "low",
+    "evidence": "No Open Graph <meta property=\"og:title\"> found.",
+    "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
+  },
+  {
+    "metric": "open_graph_image_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/fantasy_19/index.html",
+    "severity": "low",
+    "evidence": "No Open Graph <meta property=\"og:image\"> found.",
+    "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
+  },
+  {
+    "metric": "meta_description_empty",
+    "page": "https://books.toscrape.com/catalogue/category/books/new-adult_20/index.html",
+    "severity": "medium",
+    "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
+    "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
+  },
+  {
+    "metric": "heading_hierarchy_skip",
+    "page": "https://books.toscrape.com/catalogue/category/books/new-adult_20/index.html",
+    "severity": "low",
+    "evidence": "Document contains 6 <h3> elements but no <h2> elements.",
+    "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
+  },
+  {
+    "metric": "canonical_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/new-adult_20/index.html",
+    "severity": "medium",
+    "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
+    "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
+  },
+  {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/new-adult_20/index.html",
+    "severity": "low",
+    "evidence": "6 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
+    "metric": "open_graph_title_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/new-adult_20/index.html",
+    "severity": "low",
+    "evidence": "No Open Graph <meta property=\"og:title\"> found.",
+    "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
+  },
+  {
+    "metric": "open_graph_image_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/new-adult_20/index.html",
     "severity": "low",
     "evidence": "No Open Graph <meta property=\"og:image\"> found.",
     "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
@@ -768,6 +873,13 @@
     "severity": "medium",
     "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
     "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
+  },
+  {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/young-adult_21/index.html",
+    "severity": "low",
+    "evidence": "20 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
   },
   {
     "metric": "open_graph_title_missing",
@@ -805,6 +917,13 @@
     "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
   },
   {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/science_22/index.html",
+    "severity": "low",
+    "evidence": "14 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
     "metric": "open_graph_title_missing",
     "page": "https://books.toscrape.com/catalogue/category/books/science_22/index.html",
     "severity": "low",
@@ -819,78 +938,127 @@
     "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
   },
   {
-    "metric": "slow_server_response",
-    "page": "https://books.toscrape.com/catalogue/category/books/childrens_11/index.html",
-    "severity": "low",
-    "evidence": "Server response time was 2.83s, exceeding the recommended 2.5s threshold.",
-    "suggested_fix": "Optimize server-side response times, implement caching, or use a CDN to reduce time to first byte."
-  },
-  {
     "metric": "meta_description_empty",
-    "page": "https://books.toscrape.com/catalogue/category/books/childrens_11/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/add-a-comment_18/index.html",
     "severity": "medium",
     "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
     "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
   },
   {
     "metric": "heading_hierarchy_skip",
-    "page": "https://books.toscrape.com/catalogue/category/books/childrens_11/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/add-a-comment_18/index.html",
     "severity": "low",
     "evidence": "Document contains 20 <h3> elements but no <h2> elements.",
     "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
   },
   {
     "metric": "canonical_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/childrens_11/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/add-a-comment_18/index.html",
     "severity": "medium",
     "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
     "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
   },
   {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/add-a-comment_18/index.html",
+    "severity": "low",
+    "evidence": "20 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
     "metric": "open_graph_title_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/childrens_11/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/add-a-comment_18/index.html",
     "severity": "low",
     "evidence": "No Open Graph <meta property=\"og:title\"> found.",
     "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
   },
   {
     "metric": "open_graph_image_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/childrens_11/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/add-a-comment_18/index.html",
     "severity": "low",
     "evidence": "No Open Graph <meta property=\"og:image\"> found.",
     "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
   },
   {
     "metric": "meta_description_empty",
-    "page": "https://books.toscrape.com/catalogue/category/books/new-adult_20/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/music_14/index.html",
     "severity": "medium",
     "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
     "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
   },
   {
     "metric": "heading_hierarchy_skip",
-    "page": "https://books.toscrape.com/catalogue/category/books/new-adult_20/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/music_14/index.html",
     "severity": "low",
-    "evidence": "Document contains 6 <h3> elements but no <h2> elements.",
+    "evidence": "Document contains 13 <h3> elements but no <h2> elements.",
     "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
   },
   {
     "metric": "canonical_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/new-adult_20/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/music_14/index.html",
     "severity": "medium",
     "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
     "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
   },
   {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/music_14/index.html",
+    "severity": "low",
+    "evidence": "13 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
     "metric": "open_graph_title_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/new-adult_20/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/music_14/index.html",
     "severity": "low",
     "evidence": "No Open Graph <meta property=\"og:title\"> found.",
     "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
   },
   {
     "metric": "open_graph_image_missing",
-    "page": "https://books.toscrape.com/catalogue/category/books/new-adult_20/index.html",
+    "page": "https://books.toscrape.com/catalogue/category/books/music_14/index.html",
+    "severity": "low",
+    "evidence": "No Open Graph <meta property=\"og:image\"> found.",
+    "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."
+  },
+  {
+    "metric": "meta_description_empty",
+    "page": "https://books.toscrape.com/catalogue/category/books/default_15/index.html",
+    "severity": "medium",
+    "evidence": "The <meta name=\"description\"> tag exists but its content attribute is empty.",
+    "suggested_fix": "Provide a descriptive summary in the content attribute of the meta description."
+  },
+  {
+    "metric": "heading_hierarchy_skip",
+    "page": "https://books.toscrape.com/catalogue/category/books/default_15/index.html",
+    "severity": "low",
+    "evidence": "Document contains 20 <h3> elements but no <h2> elements.",
+    "suggested_fix": "Maintain a logical heading hierarchy by nesting <h3> headings under <h2> sections."
+  },
+  {
+    "metric": "canonical_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/default_15/index.html",
+    "severity": "medium",
+    "evidence": "No <link rel=\"canonical\"> tag found in the document <head>.",
+    "suggested_fix": "Add an explicit canonical link pointing to the preferred authoritative URL."
+  },
+  {
+    "metric": "image_dimensions_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/default_15/index.html",
+    "severity": "low",
+    "evidence": "20 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
+    "suggested_fix": "Add width and height attributes to <img> elements to reserve layout space and prevent layout shifts."
+  },
+  {
+    "metric": "open_graph_title_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/default_15/index.html",
+    "severity": "low",
+    "evidence": "No Open Graph <meta property=\"og:title\"> found.",
+    "suggested_fix": "Add an og:title tag to optimize how content appears when shared across social networks."
+  },
+  {
+    "metric": "open_graph_image_missing",
+    "page": "https://books.toscrape.com/catalogue/category/books/default_15/index.html",
     "severity": "low",
     "evidence": "No Open Graph <meta property=\"og:image\"> found.",
     "suggested_fix": "Add an og:image tag with an appropriate preview image (1200x630px recommended)."

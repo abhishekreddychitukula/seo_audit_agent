@@ -102,6 +102,45 @@ class TestQ1OnPageAuditor(unittest.TestCase):
         dup_findings = [f for f in findings if f["metric"] == "duplicate_title"]
         self.assertEqual(len(dup_findings), 2)
 
+    def test_new_metrics_depth_redirects_and_assets(self):
+        html = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <title>Valid Document Title Here For Testing</title>
+            <script src="/static/app.js"></script>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="canonical" href="https://example.com/sub">
+        </head>
+        <body>
+            <h1>Main Topic</h1>
+            <img src="/img/hero.png" alt="Hero banner">
+            <img src="/img/1.png" alt="Img 1">
+            <img src="/img/2.png" alt="Img 2">
+            <img src="/img/3.png" alt="Img 3">
+        </body>
+        </html>
+        """
+        p = Page(
+            url="https://example.com/sub",
+            status=200,
+            content_type="text/html",
+            html=html,
+            final_url="https://example.com/sub",
+            depth=4,
+            redirect_chain=[
+                {"status": 301, "url": "http://example.com/sub"},
+                {"status": 302, "url": "https://example.com/sub/"},
+            ],
+        )
+        findings = audit([p])
+        metrics = {f["metric"] for f in findings}
+
+        self.assertIn("click_depth_high", metrics)
+        self.assertIn("redirect_chain", metrics)
+        self.assertIn("render_blocking_script", metrics)
+        self.assertIn("image_dimensions_missing", metrics)
+
 
 if __name__ == "__main__":
     unittest.main()

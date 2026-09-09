@@ -10,7 +10,7 @@ from . import nap, q1_onpage, q3_grounded_qa
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Free, evidence-backed SEO Audit Agents (Q1: On-page, Q2: NAP consistency, Q3: Grounded Q&A)."
+        description="Free, evidence-backed SEO Audit Agents with optional multi-provider AI enhancement (Gemini, Groq, OpenAI)."
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
 
@@ -21,8 +21,15 @@ def main():
     p1.add_argument("--max-pages", type=int, default=150, help="Maximum pages to crawl (default: 150)")
     p1.add_argument("--timeout", type=float, default=12.0, help="HTTP request timeout in seconds")
     p1.add_argument("--concurrency", type=int, default=5, help="Number of concurrent crawler workers (default: 5)")
+    p1.add_argument(
+        "--ai-provider",
+        choices=["auto", "gemini", "groq", "openai", "none"],
+        default="auto",
+        help="AI provider for tailored fix recommendations (default: auto)",
+    )
+    p1.add_argument("--ai-model", default=None, help="Custom AI model name override")
 
-    # Q2: NAP Consistency Checker
+    # Q2: NAP Consistency Checker (100% Rule-Based)
     p2 = sub.add_parser("q2", help="Question 2: Business NAP consistency checker (outputs nap_report.json)")
     p2.add_argument("url", help="Target business website URL")
     p2.add_argument("-o", "--output", default="nap_report.json", help="Path to output JSON deliverable")
@@ -38,18 +45,27 @@ def main():
     p3.add_argument("--max-pages", type=int, default=150, help="Maximum pages to crawl (default: 150)")
     p3.add_argument("--timeout", type=float, default=12.0, help="HTTP request timeout in seconds")
     p3.add_argument("--concurrency", type=int, default=5, help="Number of concurrent crawler workers (default: 5)")
+    p3.add_argument(
+        "--ai-provider",
+        choices=["auto", "gemini", "groq", "openai", "none"],
+        default="auto",
+        help="AI provider for hybrid passage verification (default: auto)",
+    )
+    p3.add_argument("--ai-model", default=None, help="Custom AI model name override")
 
     args = parser.parse_args()
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
 
     if args.cmd == "q1":
-        print(f"[Q1] Crawling and auditing on-page SEO for: {args.url} ...", file=sys.stderr)
+        print(f"[Q1] Crawling and auditing on-page SEO for: {args.url} (AI: {args.ai_provider}) ...", file=sys.stderr)
         result = q1_onpage.run(
             args.url,
             output=args.output,
             max_pages=args.max_pages,
             timeout=args.timeout,
             concurrency=args.concurrency,
+            ai_provider=args.ai_provider,
+            ai_model=args.ai_model,
         )
         print(f"[Q1] Done. {len(result)} findings written to {args.output}", file=sys.stderr)
 
@@ -65,7 +81,10 @@ def main():
         print(f"[Q2] Done. NAP report written to {args.output}", file=sys.stderr)
 
     elif args.cmd == "q3":
-        print(f"[Q3] Searching exact grounded passage for query '{args.query}' on: {args.url} ...", file=sys.stderr)
+        print(
+            f"[Q3] Searching grounded passage for '{args.query}' on: {args.url} (AI: {args.ai_provider}) ...",
+            file=sys.stderr,
+        )
         result = q3_grounded_qa.run(
             args.url,
             args.query,
@@ -73,11 +92,12 @@ def main():
             max_pages=args.max_pages,
             timeout=args.timeout,
             concurrency=args.concurrency,
+            ai_provider=args.ai_provider,
+            ai_model=args.ai_model,
         )
         status = "Answer found" if result.get("excerpt") is not None else "Refusal to guess (null)"
         print(f"[Q3] Done ({status}). Result written to {args.output}", file=sys.stderr)
 
-    # Print pretty JSON deliverable to stdout
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
 
