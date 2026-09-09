@@ -1,0 +1,5 @@
+{
+  "query": "What is the warning about prices and ratings on this website?",
+  "url": "https://books.toscrape.com/",
+  "excerpt": "Warning! This is a demo website for web scraping purposes. Prices and ratings here were randomly assigned and have no real meaning."
+}
