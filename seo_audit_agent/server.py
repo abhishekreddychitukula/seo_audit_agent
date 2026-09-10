@@ -88,9 +88,7 @@ class APIHandler(BaseHTTPRequestHandler):
                     ai_model=ai_model,
                 )
                 ai = AIProvider(provider=ai_provider, model=ai_model)
-                summary = ai.generate_seo_summary(findings, url)
-                if not summary:
-                    summary = deterministic_seo_summary(findings, url)
+                summary = ai.generate_seo_summary(findings, url) if ai.is_available else None
 
                 self._send_json(200, {
                     "task": "q1_onpage",

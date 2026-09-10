@@ -97,7 +97,7 @@ export default function ConsolePage({ selectedModel }) {
           resultData = {
             task: 'q1_onpage',
             url: targetUrl,
-            summary: DEMO_Q1_SUMMARY,
+            summary: (selectedModel && selectedModel !== 'none') ? DEMO_Q1_SUMMARY : null,
             findings: DEMO_Q1_AUDIT,
           };
         } else if (taskType === 'q2') {
@@ -109,7 +109,7 @@ export default function ConsolePage({ selectedModel }) {
             query: queryText || DEMO_Q3_QA.query,
             answer: {
               query: queryText || DEMO_Q3_QA.query,
-              answer: DEMO_Q3_QA.answer,
+              answer: (selectedModel && selectedModel !== 'none') ? DEMO_Q3_QA.answer : null,
               url: targetUrl.includes('books.toscrape.com') ? DEMO_Q3_QA.url : targetUrl,
               excerpt: DEMO_Q3_QA.excerpt,
             },
