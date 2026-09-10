@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { DEMO_Q1_AUDIT, DEMO_Q2_NAP, DEMO_Q3_QA } from '../demoData';
+import { DEMO_Q1_AUDIT, DEMO_Q1_SUMMARY, DEMO_Q2_NAP, DEMO_Q3_QA } from '../demoData';
 
 export default function ConsolePage({ selectedModel }) {
   const [messages, setMessages] = useState([]);
@@ -94,7 +94,12 @@ export default function ConsolePage({ selectedModel }) {
       // Fallback to sample data if offline
       if (!resultData) {
         if (taskType === 'q1') {
-          resultData = { task: 'q1_onpage', url: targetUrl, findings: DEMO_Q1_AUDIT };
+          resultData = {
+            task: 'q1_onpage',
+            url: targetUrl,
+            summary: DEMO_Q1_SUMMARY,
+            findings: DEMO_Q1_AUDIT,
+          };
         } else if (taskType === 'q2') {
           resultData = { task: 'q2_nap', url: targetUrl, fields: DEMO_Q2_NAP };
         } else {
@@ -104,6 +109,7 @@ export default function ConsolePage({ selectedModel }) {
             query: queryText || DEMO_Q3_QA.query,
             answer: {
               query: queryText || DEMO_Q3_QA.query,
+              answer: DEMO_Q3_QA.answer,
               url: targetUrl.includes('books.toscrape.com') ? DEMO_Q3_QA.url : targetUrl,
               excerpt: DEMO_Q3_QA.excerpt,
             },
@@ -146,6 +152,52 @@ export default function ConsolePage({ selectedModel }) {
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadReport = (msg) => {
+    let exportObj = null;
+    let cleanHost = 'target';
+    try {
+      cleanHost = new URL(msg.url).hostname.replace(/[^a-z0-9]/gi, '_');
+    } catch (_) {
+      cleanHost = 'site';
+    }
+    let filename = `report_${cleanHost}.json`;
+
+    if (msg.task === 'q1') {
+      filename = `seo_audit_report_${cleanHost}.json`;
+      exportObj = {
+        report_title: 'Technical On-Page SEO Audit & Remediation Roadmap',
+        target_url: msg.url,
+        generated_at: new Date().toISOString(),
+        ai_executive_summary: msg.data.summary || null,
+        total_findings: msg.data.findings?.length || 0,
+        findings: msg.data.findings || [],
+      };
+    } else if (msg.task === 'q2') {
+      filename = `nap_consistency_report_${cleanHost}.json`;
+      exportObj = {
+        report_title: 'Business NAP Consistency Audit Report',
+        target_url: msg.url,
+        generated_at: new Date().toISOString(),
+        fields: msg.data.fields || [],
+      };
+    } else if (msg.task === 'q3') {
+      filename = `aeo_qa_report_${cleanHost}.json`;
+      exportObj = {
+        report_title: 'AEO Grounded Q&A Verification Report',
+        target_url: msg.url,
+        query: msg.data.query || msg.data.answer?.query,
+        direct_answer: msg.data.answer?.answer || null,
+        grounding_evidence_excerpt: msg.data.answer?.excerpt || null,
+        source_url: msg.data.answer?.url || null,
+        generated_at: new Date().toISOString(),
+      };
+    }
+
+    if (exportObj) {
+      downloadJSON(exportObj, filename);
+    }
   };
 
   return (
@@ -216,16 +268,12 @@ export default function ConsolePage({ selectedModel }) {
                   <div className="agent-header-actions">
                     <button
                       type="button"
-                      className="btn-secondary-sm"
-                      onClick={() => {
-                        const deliverable = msg.task === 'q1' ? msg.data.findings : msg.task === 'q2' ? msg.data.fields : msg.data.answer;
-                        const filename = msg.task === 'q1' ? 'audit.json' : msg.task === 'q2' ? 'nap_report.json' : 'answer.json';
-                        downloadJSON(deliverable, filename);
-                      }}
-                      title="Download JSON deliverable"
+                      className="btn-download-report"
+                      onClick={() => handleDownloadReport(msg)}
+                      title="Download comprehensive audit report"
                     >
-                      <span>&#8595;</span>
-                      <span>Export JSON</span>
+                      <span className="btn-dl-icon">&#8595;</span>
+                      <span>Download Report</span>
                     </button>
                   </div>
                 </div>
@@ -234,6 +282,44 @@ export default function ConsolePage({ selectedModel }) {
                   {/* Q1 On-Page Visualizer */}
                   {msg.task === 'q1' && (
                     <div>
+                      {/* AI Executive Summary & Action Plan Card */}
+                      {msg.data.summary && (
+                        <div className="seo-summary-card">
+                          <div className="seo-summary-header">
+                            <div className="seo-summary-title-row">
+                              <span className="summary-badge">✦ AI Executive Summary &amp; Action Plan</span>
+                              {msg.data.summary.health_score !== undefined && (
+                                <span className={`health-score-pill ${msg.data.summary.health_score >= 80 ? 'good' : msg.data.summary.health_score >= 60 ? 'fair' : 'poor'}`}>
+                                  SEO Health Score: {msg.data.summary.health_score}/100
+                                </span>
+                              )}
+                            </div>
+                            <p className="seo-summary-overview">{msg.data.summary.overview}</p>
+                          </div>
+
+                          {msg.data.summary.priority_actions && msg.data.summary.priority_actions.length > 0 && (
+                            <div className="priority-actions-section">
+                              <div className="priority-actions-title">Key Priority Changes to Boost SEO &amp; Fix Issues:</div>
+                              <div className="priority-action-list">
+                                {msg.data.summary.priority_actions.map((act, i) => (
+                                  <div key={i} className="priority-action-item">
+                                    <div className="action-rank-badge">#{act.priority || i + 1}</div>
+                                    <div className="action-details">
+                                      <div className="action-header-line">
+                                        <strong className="action-name">{act.action || act.title}</strong>
+                                        {act.impact && <span className={`impact-pill ${act.impact.toLowerCase()}`}>{act.impact} Impact</span>}
+                                        {act.category && <span className="category-pill">{act.category}</span>}
+                                      </div>
+                                      <p className="action-desc">{act.description}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Filter Chips */}
                       <div className="audit-stats-bar">
                         <span className="mono" style={{ fontSize: '12px', marginRight: '6px', color: 'var(--text-secondary)' }}>
@@ -334,21 +420,38 @@ export default function ConsolePage({ selectedModel }) {
                     <div className="qa-result-box">
                       <div className="qa-query-header">Query: "{msg.data.query || msg.data.answer?.query}"</div>
                       {msg.data.answer?.excerpt ? (
-                        <div className="qa-excerpt-card">
-                          <blockquote className="qa-excerpt-quote">
-                            "{msg.data.answer.excerpt}"
-                          </blockquote>
-                          <div className="qa-meta-bar">
-                            <span>Verbatim grounded excerpt from site markup</span>
-                            <a
-                              href={msg.data.answer.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="qa-url-link"
-                            >
-                              <span>{msg.data.answer.url}</span>
-                              <span>&#8599;</span>
-                            </a>
+                        <div className="qa-content-container">
+                          {/* Direct Synthesized Answer Card */}
+                          <div className="qa-direct-answer-card">
+                            <div className="qa-answer-label">
+                              <span className="qa-sparkle">✦</span> Direct Answer
+                            </div>
+                            <p className="qa-direct-answer-text">
+                              {msg.data.answer.answer || msg.data.answer.excerpt}
+                            </p>
+                          </div>
+
+                          {/* Verbatim Grounded Excerpt Box */}
+                          <div className="qa-excerpt-card">
+                            <div className="qa-excerpt-header">
+                              <span className="qa-evidence-tag">Evidence</span>
+                              <span className="qa-evidence-subtitle">Verbatim grounded excerpt from site markup</span>
+                            </div>
+                            <blockquote className="qa-excerpt-quote">
+                              "{msg.data.answer.excerpt}"
+                            </blockquote>
+                            <div className="qa-meta-bar">
+                              <span>Source Page:</span>
+                              <a
+                                href={msg.data.answer.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="qa-url-link"
+                              >
+                                <span>{msg.data.answer.url}</span>
+                                <span>&#8599;</span>
+                              </a>
+                            </div>
                           </div>
                         </div>
                       ) : (

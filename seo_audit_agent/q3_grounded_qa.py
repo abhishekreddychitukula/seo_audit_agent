@@ -109,6 +109,14 @@ def extract_passages_from_html(html: str) -> list[str]:
                     seen.add(clean_text)
                     passages.append(clean_text)
 
+    # 4. Meta description summary (grounded site overview)
+    meta_desc = soup.find("meta", attrs={"name": re.compile(r"^description$", re.I)})
+    if meta_desc and meta_desc.get("content"):
+        clean_desc = re.sub(r"\s+", " ", meta_desc["content"]).strip()
+        if len(clean_desc) >= 25 and clean_desc not in seen:
+            seen.add(clean_desc)
+            passages.append(clean_desc)
+
     return passages
 
 
@@ -124,6 +132,7 @@ class PassageDoc:
 
 class AnswerResult(TypedDict):
     query: str
+    answer: str | None
     url: str | None
     excerpt: str | None
 
@@ -160,6 +169,12 @@ def compute_bm25_and_coverage(
     if len(query_tokens) >= 2 and q_norm in doc_norm:
         score += 3.0
 
+    # Domain relevance tuning: if query isn't about legal terms, demote terms-and-conditions boilerplate
+    has_legal_query = any(w in query_tokens for w in ("term", "privacy", "legal", "refund", "policy", "disclaimer", "license"))
+    is_legal_url = any(w in doc.url.lower() for w in ("terms", "privacy", "legal", "policy", "disclaimer", "license"))
+    if is_legal_url and not has_legal_query:
+        score *= 0.5
+
     return score, coverage
 
 
@@ -176,7 +191,7 @@ def answer(
     q_tokens = extract_query_tokens(clean_query)
 
     if not q_tokens:
-        return {"query": clean_query, "url": None, "excerpt": None}
+        return {"query": clean_query, "answer": None, "url": None, "excerpt": None}
 
     crawler = SiteCrawler(url, max_pages=max_pages, timeout=timeout, concurrency=concurrency)
     pages = crawler.crawl()
@@ -196,7 +211,7 @@ def answer(
                     doc_freqs[unique_term] += 1
 
     if not documents:
-        return {"query": clean_query, "url": None, "excerpt": None}
+        return {"query": clean_query, "answer": None, "url": None, "excerpt": None}
 
     total_docs = len(documents)
     avg_doc_len = sum(d.length for d in documents) / total_docs
@@ -210,16 +225,17 @@ def answer(
 
     ranked_candidates.sort(key=lambda x: x[1], reverse=True)
 
-    # Optional AI Verification & Refinement Layer
+    # AI Verification & Direct Answer Synthesis Layer
     ai = AIProvider(provider=ai_provider, model=ai_model)
     if ai.is_available and ranked_candidates:
-        candidate_triplets = [(doc.url, doc.text, sc) for doc, sc, _ in ranked_candidates[:5]]
-        ai_res = ai.verify_and_refine_answer(clean_query, candidate_triplets)
+        candidate_triplets = [(doc.url, doc.text, sc) for doc, sc, _ in ranked_candidates[:6]]
+        ai_res = ai.synthesize_and_verify_answer(clean_query, candidate_triplets)
         if ai_res is not None:
-            chosen_url, chosen_text = ai_res
+            chosen_url, chosen_text, direct_ans = ai_res
             if chosen_url and chosen_text:
                 return {
                     "query": clean_query,
+                    "answer": direct_ans or chosen_text,
                     "url": chosen_url,
                     "excerpt": chosen_text,
                 }
@@ -227,10 +243,11 @@ def answer(
                 # AI verified refusal
                 return {
                     "query": clean_query,
+                    "answer": None,
                     "url": None,
                     "excerpt": None,
                 }
-        # If AI returned None (error/timeout), code seamlessly falls through to deterministic fallback!
+        # If AI returned None (network failure / key issue), seamlessly fall back to deterministic method!
 
     # Deterministic manual fallback logic
     min_coverage_threshold = 0.50 if len(q_tokens) >= 2 else 1.0
@@ -241,6 +258,7 @@ def answer(
         if best_cov >= min_coverage_threshold and best_score >= min_bm25_threshold:
             return {
                 "query": clean_query,
+                "answer": best_doc.text,
                 "url": best_doc.url,
                 "excerpt": best_doc.text,
             }
@@ -248,6 +266,7 @@ def answer(
     # Strict refusal to guess
     return {
         "query": clean_query,
+        "answer": None,
         "url": None,
         "excerpt": None,
     }

@@ -59,6 +59,41 @@ export const DEMO_Q1_AUDIT = [
   }
 ];
 
+export const DEMO_Q1_SUMMARY = {
+  health_score: 82,
+  overview: "Technical audit of books.toscrape.com identified 8 actionable opportunities across 25 crawled pages. Resolving missing canonical directives and empty meta descriptions will deliver immediate indexing clarity and CTR gains.",
+  priority_actions: [
+    {
+      priority: 1,
+      impact: "High",
+      category: "Indexing",
+      action: "Add Self-Referencing Canonical Tags",
+      description: "Implement explicit <link rel=\"canonical\"> tags on the homepage and catalogue index to consolidate search ranking signals."
+    },
+    {
+      priority: 2,
+      impact: "High",
+      category: "CTR & Metadata",
+      action: "Populate Meta Descriptions & Differentiate Titles",
+      description: "Add descriptive summaries to the empty description tag on root, and provide unique title tags to avoid keyword cannibalization."
+    },
+    {
+      priority: 3,
+      impact: "Medium",
+      category: "AEO / AI Search",
+      action: "Deploy /llms.txt for AI Engine Discovery",
+      description: "Create an /llms.txt file at domain root to guide LLM search systems (Perplexity, SearchGPT) on product catalog structure."
+    },
+    {
+      priority: 4,
+      impact: "Medium",
+      category: "Core Web Vitals",
+      action: "Specify Image Width and Height Attributes",
+      description: "Set explicit width and height dimensions on book thumbnail images to eliminate Cumulative Layout Shifts (CLS)."
+    }
+  ]
+};
+
 export const DEMO_Q2_NAP = [
   {
     field: "name",
@@ -109,6 +144,7 @@ export const DEMO_Q2_NAP = [
 
 export const DEMO_Q3_QA = {
   query: "What is the warning about prices and ratings on this website?",
+  answer: "This is a demonstration sandbox website built strictly for testing web scrapers; all product prices and star ratings have been randomly generated and do not represent genuine market values.",
   url: "https://books.toscrape.com/",
   excerpt: "Warning! This is a demo website for web scraping purposes. Prices and ratings here were randomly assigned and have no real meaning."
 };

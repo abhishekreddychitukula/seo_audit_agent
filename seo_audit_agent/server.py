@@ -8,7 +8,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, urlparse
 
 from . import nap, q1_onpage, q3_grounded_qa
-from .ai_provider import AIProvider
+from .ai_provider import AIProvider, deterministic_seo_summary
 
 
 class APIHandler(BaseHTTPRequestHandler):
@@ -87,9 +87,15 @@ class APIHandler(BaseHTTPRequestHandler):
                     ai_provider=ai_provider,
                     ai_model=ai_model,
                 )
+                ai = AIProvider(provider=ai_provider, model=ai_model)
+                summary = ai.generate_seo_summary(findings, url)
+                if not summary:
+                    summary = deterministic_seo_summary(findings, url)
+
                 self._send_json(200, {
                     "task": "q1_onpage",
                     "url": url,
+                    "summary": summary,
                     "findings_count": len(findings),
                     "findings": findings,
                 })

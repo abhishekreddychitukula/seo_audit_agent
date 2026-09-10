@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from seo_audit_agent.ai_provider import AIProvider
+from seo_audit_agent.ai_provider import AIProvider, deterministic_seo_summary
 
 
 class TestAIProvider(unittest.TestCase):
@@ -66,6 +66,23 @@ class TestAIProvider(unittest.TestCase):
         ai = AIProvider(provider="groq", api_key="dummy-key")
         result = ai.generate_text("test prompt")
         self.assertIsNone(result)
+
+    def test_deterministic_seo_summary(self):
+        findings = [
+            {"metric": "canonical_missing", "severity": "critical", "evidence": "No canonical", "suggested_fix": "Add canonical"},
+            {"metric": "meta_description_empty", "severity": "medium", "evidence": "Empty desc", "suggested_fix": "Add description"},
+        ]
+        res = deterministic_seo_summary(findings, "https://example.com")
+        self.assertIn("health_score", res)
+        self.assertIn("overview", res)
+        self.assertIn("priority_actions", res)
+        self.assertTrue(len(res["priority_actions"]) >= 1)
+        self.assertEqual(res["priority_actions"][0]["priority"], 1)
+
+    def test_synthesize_answer_fallback(self):
+        ai = AIProvider(provider="none")
+        self.assertIsNone(ai.synthesize_and_verify_answer("why use toolle", []))
+        self.assertIsNone(ai.generate_seo_summary([], "https://example.com"))
 
 
 if __name__ == "__main__":
