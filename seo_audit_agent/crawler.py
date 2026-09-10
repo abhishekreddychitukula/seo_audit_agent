@@ -34,6 +34,9 @@ class Page:
 def normalize_url(url: str, base: str | None = None) -> str:
     if not url:
         return ""
+    url = url.strip()
+    if not re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*://", url):
+        url = "https://" + url
     if base:
         url = urljoin(base, url)
     url, _ = urldefrag(url)

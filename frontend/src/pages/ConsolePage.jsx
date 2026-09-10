@@ -1,7 +1,226 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { DEMO_Q1_AUDIT, DEMO_Q1_SUMMARY, DEMO_Q2_NAP, DEMO_Q3_QA } from '../demoData';
+import { DEMO_Q1_AUDIT, DEMO_Q1_SUMMARY, DEMO_Q2_NAP, DEMO_Q2_OFFSITE, DEMO_Q3_QA } from '../demoData';
 
-export default function ConsolePage({ selectedModel }) {
+function NapVisualizer({ data }) {
+  const [activeTab, setActiveTab] = useState('in_site');
+  const inSiteFields = data?.in_site || data?.fields || [];
+  const offSite = data?.off_site || null;
+
+  return (
+    <div className="nap-container">
+      {/* Dual Tab Header */}
+      <div className="nap-tab-header">
+        <div className="nap-tab-pills">
+          <button
+            type="button"
+            className={`nap-tab-btn ${activeTab === 'in_site' ? 'active' : ''}`}
+            onClick={() => setActiveTab('in_site')}
+          >
+            🏢 In-Site Consistency
+            <span className="nap-tab-count">
+              {inSiteFields.filter((f) => f.verdict === 'consistent').length}/{inSiteFields.length} Consistent
+            </span>
+          </button>
+          <button
+            type="button"
+            className={`nap-tab-btn ${activeTab === 'off_site' ? 'active' : ''}`}
+            onClick={() => setActiveTab('off_site')}
+          >
+            🌐 Off-Site Citations (Web Search)
+            {offSite?.citation_health_score !== null && offSite?.citation_health_score !== undefined && (
+              <span className="nap-score-pill">
+                Score {offSite.citation_health_score}/100
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Tab 1: In-Site Consistency */}
+      {activeTab === 'in_site' && (
+        <div className="nap-field-cards">
+          {inSiteFields.map((fld) => (
+            <div key={fld.field} className="nap-card">
+              <div className="nap-card-header">
+                <div className="nap-card-field">{fld.field}</div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <span className={`nap-verdict-tag ${fld.verdict}`}>{fld.verdict}</span>
+                  <span className="nap-confidence-pill">
+                    Confidence: {(fld.confidence * 100).toFixed(0)}%
+                  </span>
+                </div>
+              </div>
+
+              <p className="nap-explanation-text">{fld.confidence_explanation}</p>
+
+              {fld.values && fld.values.length > 0 ? (
+                <table className="nap-values-table">
+                  <thead>
+                    <tr>
+                      <th>Extracted Value</th>
+                      <th>Normalized</th>
+                      <th>Sources</th>
+                      <th>Pages</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fld.values.map((v, i) => (
+                      <tr key={i}>
+                        <td>
+                          <strong>{v.value}</strong>
+                        </td>
+                        <td className="mono" style={{ color: 'var(--text-secondary)' }}>
+                          {v.normalized}
+                        </td>
+                        <td>{v.sources.join(', ')}</td>
+                        <td>{v.pages.length} page(s)</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+                  No instances found across any crawled pages.
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Tab 2: Off-Site Citations */}
+      {activeTab === 'off_site' && (
+        <div className="nap-offsite-view">
+          {/* Canonical In-Site Baseline & Score Banner */}
+          <div className="nap-offsite-banner">
+            <div className="nap-canonical-box">
+              <div className="nap-canonical-title">Canonical In-Site Baseline (Ground Truth)</div>
+              <div className="nap-canonical-grid">
+                <div>
+                  <strong>Name:</strong>{' '}
+                  <span>{offSite?.in_site_canonical?.name || 'Not detected'}</span>
+                </div>
+                <div>
+                  <strong>Address:</strong>{' '}
+                  <span>{offSite?.in_site_canonical?.address || 'Not detected'}</span>
+                </div>
+                <div>
+                  <strong>Phone:</strong>{' '}
+                  <span>{offSite?.in_site_canonical?.phone || 'Not detected'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="nap-offsite-score-card">
+              <div className="nap-score-label">Citation Health</div>
+              <div className="nap-score-val">
+                {offSite?.citation_health_score !== null && offSite?.citation_health_score !== undefined
+                  ? `${offSite.citation_health_score}/100`
+                  : 'N/A'}
+              </div>
+              <div className="nap-agent-tool-tag">Tool: search_web (ddgs live citations)</div>
+            </div>
+          </div>
+
+          {/* AI Footprint Summary */}
+          {offSite?.summary && (
+            <div className="nap-offsite-summary">
+              <div className="nap-summary-header">
+                <span className="summary-sparkle">✦</span> Off-Site Web Footprint Summary
+              </div>
+              <p className="nap-summary-text">{offSite.summary}</p>
+            </div>
+          )}
+
+          {/* Notice if no LLM Key configured */}
+          {offSite?.status === 'no_llm' && (
+            <div className="nap-no-llm-banner">
+              <strong>LLM API Key Required:</strong> Configure <code>GROQ_API_KEY</code> or{' '}
+              <code>GEMINI_API_KEY</code> in your <code>.env</code> file to enable the agent to autonomously search
+              the web and audit external listings.
+            </div>
+          )}
+
+          {/* External Citations */}
+          <div className="nap-citations-section">
+            <div className="nap-citations-title">
+              External Directory & Citation Findings
+              <span className="nap-citations-count">
+                ({offSite?.citations?.length || 0} external source{offSite?.citations?.length === 1 ? '' : 's'})
+              </span>
+            </div>
+
+            {offSite?.citations && offSite.citations.length > 0 ? (
+              <div className="nap-citations-grid">
+                {offSite.citations.map((cit, idx) => (
+                  <div key={idx} className="nap-citation-card">
+                    <div className="nap-citation-top">
+                      <div>
+                        <div className="nap-citation-source">{cit.source}</div>
+                        {cit.url && (
+                          <a
+                            href={cit.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="nap-citation-link"
+                          >
+                            {cit.url.replace(/^https?:\/\//i, '').slice(0, 45)}... ↗
+                          </a>
+                        )}
+                      </div>
+                      <span className={`nap-match-badge ${cit.match_status}`}>
+                        {cit.match_status?.replace('_', ' ')}
+                      </span>
+                    </div>
+
+                    <div className="nap-citation-details">
+                      <div className="nap-detail-row">
+                        <span className="nap-detail-lbl">Name:</span>
+                        <span className="nap-detail-val">{cit.name || '—'}</span>
+                      </div>
+                      <div className="nap-detail-row">
+                        <span className="nap-detail-lbl">Address:</span>
+                        <span className="nap-detail-val">{cit.address || '—'}</span>
+                      </div>
+                      <div className="nap-detail-row">
+                        <span className="nap-detail-lbl">Phone:</span>
+                        <span className="nap-detail-val">{cit.phone || '—'}</span>
+                      </div>
+                    </div>
+
+                    {cit.discrepancy_details && (
+                      <div className="nap-citation-note">
+                        <strong>Analysis:</strong> {cit.discrepancy_details}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="nap-empty-citations">
+                <p>No external business directory or map listings were identified for this domain on the public web.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Recommendations Checklist */}
+          {offSite?.recommendations && offSite.recommendations.length > 0 && (
+            <div className="nap-recs-card">
+              <div className="nap-recs-header">Actionable Citation & Local SEO Recommendations</div>
+              <ul className="nap-recs-list">
+                {offSite.recommendations.map((rec, i) => (
+                  <li key={i}>{rec}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ConsolePage() {
   const [messages, setMessages] = useState([]);
   const [urlInput, setUrlInput] = useState('');
   const [queryInput, setQueryInput] = useState('');
@@ -29,6 +248,11 @@ export default function ConsolePage({ selectedModel }) {
   };
 
   const executeAudit = async (targetUrl, taskType, queryText) => {
+    let cleanUrl = targetUrl.trim();
+    if (cleanUrl && !/^https?:\/\//i.test(cleanUrl)) {
+      cleanUrl = 'https://' + cleanUrl;
+    }
+
     setIsProcessing(true);
     setActiveStep('Initiating request...');
 
@@ -45,7 +269,7 @@ export default function ConsolePage({ selectedModel }) {
       {
         id: userMsgId,
         sender: 'user',
-        url: targetUrl,
+        url: cleanUrl,
         task: taskType,
         taskLabel: taskLabels[taskType],
         query: queryText,
@@ -63,18 +287,19 @@ export default function ConsolePage({ selectedModel }) {
       setActiveStep('Auditing DOM nodes, markup, and schema signals...');
       
       let endpoint = '/api/audit';
-      let payload = { url: targetUrl, ai_provider: selectedModel, max_pages: 15 };
+      let payload = { url: cleanUrl, max_pages: 15 };
 
       if (taskType === 'q2') {
         endpoint = '/api/nap';
-        payload = { url: targetUrl, max_pages: 15 };
+        payload = { url: cleanUrl, max_pages: 15 };
       } else if (taskType === 'q3') {
         endpoint = '/api/qa';
-        payload = { url: targetUrl, query: queryText || 'What services do you offer?', ai_provider: selectedModel, max_pages: 15 };
+        payload = { url: cleanUrl, query: queryText || 'What services do you offer?', max_pages: 15 };
       }
 
       let resultData = null;
       let usedLiveBackend = false;
+      let backendError = null;
 
       try {
         const response = await fetch(`http://127.0.0.1:8000${endpoint}`, {
@@ -85,35 +310,62 @@ export default function ConsolePage({ selectedModel }) {
         if (response.ok) {
           resultData = await response.json();
           usedLiveBackend = true;
+        } else {
+          const errData = await response.json().catch(() => ({}));
+          backendError = errData.error || `Server returned ${response.status}`;
         }
       } catch (err) {
-        // Backend not running; use high-fidelity demonstration data
-        usedLiveBackend = false;
+        backendError = err.message || 'Unable to connect to local server on port 8000.';
       }
 
-      // Fallback to sample data if offline
+      // Fallback to sample data ONLY if testing default demo site offline
       if (!resultData) {
-        if (taskType === 'q1') {
-          resultData = {
-            task: 'q1_onpage',
-            url: targetUrl,
-            summary: (selectedModel && selectedModel !== 'none') ? DEMO_Q1_SUMMARY : null,
-            findings: DEMO_Q1_AUDIT,
-          };
-        } else if (taskType === 'q2') {
-          resultData = { task: 'q2_nap', url: targetUrl, fields: DEMO_Q2_NAP };
-        } else {
-          resultData = {
-            task: 'q3_qa',
-            url: targetUrl,
-            query: queryText || DEMO_Q3_QA.query,
-            answer: {
+        if (cleanUrl.includes('books.toscrape.com')) {
+          if (taskType === 'q1') {
+            resultData = {
+              task: 'q1_onpage',
+              url: cleanUrl,
+              summary: (selectedModel && selectedModel !== 'none') ? DEMO_Q1_SUMMARY : null,
+              findings: DEMO_Q1_AUDIT,
+            };
+          } else if (taskType === 'q2') {
+            resultData = {
+              task: 'q2_nap',
+              url: cleanUrl,
+              in_site: DEMO_Q2_NAP,
+              off_site: DEMO_Q2_OFFSITE,
+              fields: DEMO_Q2_NAP,
+            };
+          } else {
+            resultData = {
+              task: 'q3_qa',
+              url: cleanUrl,
               query: queryText || DEMO_Q3_QA.query,
-              answer: (selectedModel && selectedModel !== 'none') ? DEMO_Q3_QA.answer : null,
-              url: targetUrl.includes('books.toscrape.com') ? DEMO_Q3_QA.url : targetUrl,
-              excerpt: DEMO_Q3_QA.excerpt,
+              answer: {
+                query: queryText || DEMO_Q3_QA.query,
+                answer: (selectedModel && selectedModel !== 'none') ? DEMO_Q3_QA.answer : null,
+                url: cleanUrl,
+                excerpt: DEMO_Q3_QA.excerpt,
+              },
+            };
+          }
+        } else {
+          // Custom domain error: Never show misleading books.toscrape.com mock data!
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now() + 1,
+              sender: 'agent',
+              task: 'error',
+              taskLabel: 'Audit Error',
+              url: cleanUrl,
+              error: backendError || 'Crawl request could not be completed on target site.',
+              isLive: false,
             },
-          };
+          ]);
+          setIsProcessing(false);
+          setActiveStep('');
+          return;
         }
       }
 
@@ -124,18 +376,9 @@ export default function ConsolePage({ selectedModel }) {
           sender: 'agent',
           task: taskType,
           taskLabel: taskLabels[taskType],
-          url: targetUrl,
+          url: cleanUrl,
           data: resultData,
           isLive: usedLiveBackend,
-        },
-      ]);
-    } catch (e) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          sender: 'agent',
-          error: e.message || 'Execution error encountered.',
         },
       ]);
     } finally {
@@ -177,9 +420,11 @@ export default function ConsolePage({ selectedModel }) {
     } else if (msg.task === 'q2') {
       filename = `nap_consistency_report_${cleanHost}.json`;
       exportObj = {
-        report_title: 'Business NAP Consistency Audit Report',
+        report_title: 'Business NAP Consistency Audit Report (In-Site & Off-Site)',
         target_url: msg.url,
         generated_at: new Date().toISOString(),
+        in_site_consistency: msg.data.in_site || msg.data.fields || [],
+        off_site_citations: msg.data.off_site || null,
         fields: msg.data.fields || [],
       };
     } else if (msg.task === 'q3') {
@@ -282,17 +527,25 @@ export default function ConsolePage({ selectedModel }) {
                   {/* Q1 On-Page Visualizer */}
                   {msg.task === 'q1' && (
                     <div>
-                      {/* AI Executive Summary & Action Plan Card */}
+                      {/* Executive Summary & Action Plan Card */}
                       {msg.data.summary && (
                         <div className="seo-summary-card">
                           <div className="seo-summary-header">
                             <div className="seo-summary-title-row">
-                              <span className="summary-badge">✦ AI Executive Summary &amp; Action Plan</span>
-                              {msg.data.summary.health_score !== undefined && (
-                                <span className={`health-score-pill ${msg.data.summary.health_score >= 80 ? 'good' : msg.data.summary.health_score >= 60 ? 'fair' : 'poor'}`}>
-                                  SEO Health Score: {msg.data.summary.health_score}/100
+                              <span className="summary-badge">
+                                ✦ Executive Summary &amp; Action Plan
+                              </span>
+                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <span className="engine-badge ai-generated" title="Synthesized using LangChain LLM">
+                                  <span className="engine-dot green"></span>
+                                  AI Generated ({msg.data.summary.provider || 'LangChain'})
                                 </span>
-                              )}
+                                {msg.data.summary.health_score !== undefined && (
+                                  <span className={`health-score-pill ${msg.data.summary.health_score >= 80 ? 'good' : msg.data.summary.health_score >= 60 ? 'fair' : 'poor'}`}>
+                                    SEO Health Score: {msg.data.summary.health_score}/100
+                                  </span>
+                                )}
+                              </div>
                             </div>
                             <p className="seo-summary-overview">{msg.data.summary.overview}</p>
                           </div>
@@ -320,10 +573,10 @@ export default function ConsolePage({ selectedModel }) {
                         </div>
                       )}
 
-                      {/* Filter Chips */}
+                      {/* Filter Chips & Engine Indicator */}
                       <div className="audit-stats-bar">
                         <span className="mono" style={{ fontSize: '12px', marginRight: '6px', color: 'var(--text-secondary)' }}>
-                          {msg.data.findings?.length || 0} findings:
+                          {msg.data.findings?.length || 0} issues:
                         </span>
                         {['all', 'critical', 'high', 'medium', 'low'].map((sev) => {
                           const count = sev === 'all'
@@ -342,21 +595,35 @@ export default function ConsolePage({ selectedModel }) {
                             </button>
                           );
                         })}
+
+                        {/* Small label near severity indicating engine if AI summary was generated */}
+                        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+                          {msg.data.summary?.is_ai && (
+                            <span className="engine-small-tag ai" title="Summary powered by LangChain LLM">
+                              ● AI Generated ({msg.data.summary.provider || 'LangChain'})
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Findings Cards */}
+                      {/* Findings Cards with Issue Nomenclature and Concrete Observed Evidence */}
                       <div className="findings-list">
                         {msg.data.findings
                           ?.filter((f) => severityFilter === 'all' || f.severity === severityFilter)
                           .map((finding, idx) => (
                             <div key={idx} className="finding-card">
                               <div className="finding-top">
-                                <span className="finding-metric">{finding.metric}</span>
+                                <div className="finding-issue-wrapper">
+                                  <span className="finding-issue-tag">ISSUE</span>
+                                  <strong className="finding-issue-title">{finding.issue || finding.metric}</strong>
+                                </div>
                                 <span className={`severity-pill ${finding.severity}`}>{finding.severity}</span>
                               </div>
-                              <div className="finding-page-url">{finding.page}</div>
+                              <div className="finding-page-url">
+                                <span className="finding-url-label">Page:</span> {finding.page}
+                              </div>
                               <div className="finding-evidence">
-                                <strong>Evidence:</strong> {finding.evidence}
+                                <strong>Observed Evidence:</strong> {finding.evidence}
                               </div>
                               <div className="finding-fix">
                                 <strong>Recommended Fix:</strong> {finding.suggested_fix}
@@ -367,52 +634,9 @@ export default function ConsolePage({ selectedModel }) {
                     </div>
                   )}
 
-                  {/* Q2 NAP Consistency Visualizer */}
+                  {/* Q2 NAP Consistency Visualizer (In-Site & Off-Site Dual Tabs) */}
                   {msg.task === 'q2' && (
-                    <div>
-                      <div className="nap-field-cards">
-                        {msg.data.fields?.map((fld) => (
-                          <div key={fld.field} className="nap-card">
-                            <div className="nap-card-header">
-                              <div className="nap-card-field">{fld.field}</div>
-                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                <span className={`nap-verdict-tag ${fld.verdict}`}>{fld.verdict}</span>
-                                <span className="nap-confidence-pill">Confidence: {(fld.confidence * 100).toFixed(0)}%</span>
-                              </div>
-                            </div>
-
-                            <p className="nap-explanation-text">{fld.confidence_explanation}</p>
-
-                            {fld.values && fld.values.length > 0 ? (
-                              <table className="nap-values-table">
-                                <thead>
-                                  <tr>
-                                    <th>Extracted Value</th>
-                                    <th>Normalized</th>
-                                    <th>Sources</th>
-                                    <th>Pages</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {fld.values.map((v, i) => (
-                                    <tr key={i}>
-                                      <td><strong>{v.value}</strong></td>
-                                      <td className="mono" style={{ color: 'var(--text-secondary)' }}>{v.normalized}</td>
-                                      <td>{v.sources.join(', ')}</td>
-                                      <td>{v.pages.length} page(s)</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            ) : (
-                              <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
-                                No instances found across any crawled pages.
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <NapVisualizer data={msg.data} />
                   )}
 
                   {/* Q3 AEO Grounded Q&A Visualizer */}

@@ -8,8 +8,17 @@ from typing import TypedDict
 
 from bs4 import BeautifulSoup
 
-from .ai_provider import AIProvider, ProviderType
-from .crawler import SiteCrawler
+try:
+    from .ai_provider import AIProvider, ProviderType
+    from .crawler import SiteCrawler
+except (ImportError, ValueError):
+    import sys
+    from pathlib import Path
+    _pkg_dir = str(Path(__file__).resolve().parent)
+    if _pkg_dir not in sys.path:
+        sys.path.insert(0, _pkg_dir)
+    from ai_provider import AIProvider, ProviderType
+    from crawler import SiteCrawler
 
 # Comprehensive stopword list for English query filtering
 STOPWORDS = {
@@ -225,28 +234,43 @@ def answer(
 
     ranked_candidates.sort(key=lambda x: x[1], reverse=True)
 
-    # AI Verification & Direct Answer Synthesis Layer
+    # AI Semantic Relevance Retrieval & Direct Answer Synthesis Layer
     ai = AIProvider(provider=ai_provider, model=ai_model)
-    if ai.is_available and ranked_candidates:
-        candidate_triplets = [(doc.url, doc.text, sc) for doc, sc, _ in ranked_candidates[:6]]
-        ai_res = ai.synthesize_and_verify_answer(clean_query, candidate_triplets)
-        if ai_res is not None:
-            chosen_url, chosen_text, direct_ans = ai_res
-            if chosen_url and chosen_text:
-                return {
-                    "query": clean_query,
-                    "answer": direct_ans or chosen_text,
-                    "url": chosen_url,
-                    "excerpt": chosen_text,
-                }
-            else:
-                # AI verified refusal
-                return {
-                    "query": clean_query,
-                    "answer": None,
-                    "url": None,
-                    "excerpt": None,
-                }
+    if ai.is_available:
+        seen_texts = set()
+        candidates: list[tuple[str, str]] = []
+        # First include best BM25 candidates
+        for doc, _, _ in ranked_candidates[:8]:
+            if doc.text not in seen_texts:
+                seen_texts.add(doc.text)
+                candidates.append((doc.url, doc.text))
+
+        # Also include general high-value site passages so paraphrased/general queries succeed
+        for doc in documents:
+            if len(candidates) >= 12:
+                break
+            if doc.text not in seen_texts and len(doc.text) >= 40:
+                seen_texts.add(doc.text)
+                candidates.append((doc.url, doc.text))
+
+        if candidates:
+            ai_res = ai.find_relevant_answer(clean_query, candidates)
+            if ai_res is not None:
+                chosen_url, chosen_text, direct_ans = ai_res
+                if chosen_url and chosen_text:
+                    return {
+                        "query": clean_query,
+                        "answer": direct_ans or chosen_text,
+                        "url": chosen_url,
+                        "excerpt": chosen_text,
+                    }
+                else:
+                    return {
+                        "query": clean_query,
+                        "answer": None,
+                        "url": None,
+                        "excerpt": None,
+                    }
         # If AI returned None (network failure / key issue), seamlessly fall back to deterministic method!
 
     # Deterministic manual fallback logic

@@ -5,7 +5,13 @@ import json
 import sys
 from pathlib import Path
 
-from . import nap, q1_onpage, q3_grounded_qa
+try:
+    from . import nap, q1_onpage, q3_grounded_qa
+except (ImportError, ValueError):
+    _pkg_dir = str(Path(__file__).resolve().parent)
+    if _pkg_dir not in sys.path:
+        sys.path.insert(0, _pkg_dir)
+    import nap, q1_onpage, q3_grounded_qa
 
 
 def main():

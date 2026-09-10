@@ -6,453 +6,319 @@ import re
 import sys
 from typing import Literal
 
-import requests
+from dotenv import find_dotenv
 
-ProviderType = Literal["auto", "gemini", "groq", "openai", "none"]
+# ============================================================================
+# LLM ENGINE CONFIGURATION (Powered by LangChain)
+# ============================================================================
+# Easily switch between Groq and Google Gemini by commenting/uncommenting below.
+# ============================================================================
 
-DEFAULT_MODELS = {
-    "gemini": "gemini-1.5-flash",
-    "groq": "llama-3.3-70b-versatile",
-    "openai": "gpt-4o-mini",
-}
+def _clean_key(val: str | None) -> str:
+    """Strips whitespace, surrounding quotes, and ignores placeholders."""
+    if not val:
+        return ""
+    v = str(val).strip().strip("'\"")
+    if len(v) < 8 or v.lower().startswith("your_") or "placeholder" in v.lower():
+        return ""
+    return v
 
 
-from dotenv import find_dotenv, load_dotenv
+def reload_env() -> dict[str, str]:
+    """
+    Dynamically re-reads .env fresh from disk and synchronizes os.environ.
+    If a key is commented out (#) or removed, it is immediately cleared from memory.
+    """
+    env_file = find_dotenv(usecwd=True)
+    if not env_file or not os.path.isfile(env_file):
+        for candidate in [
+            os.path.join(os.getcwd(), ".env"),
+            os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"),
+        ]:
+            if os.path.isfile(candidate):
+                env_file = candidate
+                break
 
-# Automatically locate and load .env from current dir or any parent directory
-load_dotenv(find_dotenv(usecwd=True), override=True)
+    disk_keys: dict[str, str] = {}
+    if env_file and os.path.isfile(env_file):
+        try:
+            with open(env_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    # Ignore comment lines and lines without '='
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        k = k.strip()
+                        clean_v = _clean_key(v)
+                        if clean_v:
+                            disk_keys[k] = clean_v
+        except Exception:
+            pass
+
+    # Synchronize memory so commented-out keys are purged
+    for var in ("GROQ_API_KEY", "GEMINI_API_KEY", "OPENAI_API_KEY"):
+        if var in disk_keys:
+            os.environ[var] = disk_keys[var]
+        elif var in os.environ:
+            del os.environ[var]
+
+    return disk_keys
+
+
+def get_llm():
+    """
+    Initializes and returns the active LangChain chat model.
+    Returns (llm_instance, provider_name) or (None, None) if no API key is available.
+    """
+    env = reload_env()
+
+    # -------------------------------------------------------------------------
+    # OPTION 1: Groq (via LangChain) - ACTIVE BY DEFAULT
+    # -------------------------------------------------------------------------
+    groq_key = env.get("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY", "")
+    if groq_key:
+        try:
+            from langchain_groq import ChatGroq
+            # Using ultra-fast qwen3.6-27b on Groq with reasoning disabled for instant JSON
+            llm = ChatGroq(
+                model_name="qwen/qwen3.6-27b",
+                reasoning_format="hidden",
+                reasoning_effort="none",
+                temperature=0.1,
+                groq_api_key=groq_key,
+                max_tokens=600,
+            )
+            return llm, "Groq"
+        except Exception as e:
+            print(f"[LangChain] Error initializing Groq: {e}", file=sys.stderr)
+
+    # -------------------------------------------------------------------------
+    # OPTION 2: Google Gemini (via LangChain) - UNCOMMENT TO USE GEMINI
+    # -------------------------------------------------------------------------
+    # gemini_key = env.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY", "")
+    # if gemini_key:
+    #     try:
+    #         from langchain_google_genai import ChatGoogleGenerativeAI
+    #         llm = ChatGoogleGenerativeAI(
+    #             model="gemini-2.5-flash",
+    #             temperature=0.1,
+    #             google_api_key=gemini_key,
+    #             max_output_tokens=500,
+    #         )
+    #         return llm, "Gemini"
+    #     except Exception as e:
+    #         print(f"[LangChain] Error initializing Gemini: {e}", file=sys.stderr)
+
+    # If no valid API key is found in .env, return None
+    return None, None
+
+
+# ============================================================================
+# FEATURE 1: AUDIT EXECUTIVE SUMMARY & ACTION PLAN (Powered by LangChain)
+# ============================================================================
+
+def generate_audit_summary(findings: list[dict], url: str) -> dict | None:
+    """
+    Sends technical audit findings directly to the LangChain LLM to generate
+    an executive summary and a prioritized action plan.
+    
+    CRITICAL: If no API key is configured, this returns None immediately.
+    Nothing is hardcoded or faked.
+    """
+    if not findings:
+        return None
+
+    llm, provider_name = get_llm()
+    if not llm:
+        # No API key available: return None so the UI knows no AI summary exists
+        return None
+
+    # Group issues by severity for clean prompt context
+    sev_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0}
+    samples = []
+    for f in findings:
+        s = f.get("severity", "low").lower()
+        sev_counts[s] = sev_counts.get(s, 0) + 1
+        if len(samples) < 6:
+            issue_title = f.get("issue") or f.get("metric", "Technical SEO Issue")
+            samples.append(f"- [{s.upper()}] {issue_title}: {f.get('evidence', '')[:80]}")
+
+    prompt = (
+        f"You are a principal technical SEO engineer.\n"
+        f"Audit target: {url}\n"
+        f"Total issues found: {len(findings)} (Critical: {sev_counts['critical']}, High: {sev_counts['high']}, Medium: {sev_counts['medium']}, Low: {sev_counts['low']})\n"
+        f"Sample findings:\n" + "\n".join(samples) + "\n\n"
+        "Generate an executive SEO health assessment and prioritized action plan in JSON format:\n"
+        "{\n"
+        '  "health_score": <integer between 0 and 100>,\n'
+        '  "overview": "<2 concise sentences summarizing overall SEO stability and main bottlenecks>",\n'
+        '  "priority_actions": [\n'
+        '    {"priority": 1, "impact": "High", "category": "Performance", "action": "<action title>", "description": "<concrete action details>"},\n'
+        '    {"priority": 2, "impact": "Medium", "category": "Indexing", "action": "<action title>", "description": "<concrete action details>"}\n'
+        "  ]\n"
+        "}\n"
+        "Output valid JSON only. Do not include markdown code blocks or explanations."
+    )
+
+    try:
+        response = llm.invoke(prompt)
+        text = str(response.content if hasattr(response, "content") else response)
+        # Strip any <think> tags from reasoning models
+        text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+
+        m = re.search(r"\{.*\}", text, re.DOTALL)
+        if m:
+            data = json.loads(m.group(0))
+            if "overview" in data and "priority_actions" in data:
+                data["is_ai"] = True
+                data["provider"] = provider_name
+                return data
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"[LangChain Summary Error] {e}", file=sys.stderr)
+
+    return None
+
+
+# ============================================================================
+# FEATURE 2: HYBRID AEO Q&A (BM25 + LangChain Normalization)
+# ============================================================================
+
+def answer_query(
+    query: str,
+    candidate_passages: list[tuple[str, str]],  # [(url, passage_text)]
+) -> tuple[str, str, str] | None:
+    """
+    Hybrid Q&A combining BM25 retrieval with LangChain LLM semantic normalization:
+    Given the top passages pre-ranked by BM25, the LLM selects the most accurate
+    passage, retrieves the exact verbatim excerpt, and synthesizes a direct answer.
+    
+    Returns (url, verbatim_excerpt, direct_answer) or None if no match.
+    """
+    if not candidate_passages:
+        return None
+
+    llm, _ = get_llm()
+    if not llm:
+        return None
+
+    sections = []
+    for i, (u, text) in enumerate(candidate_passages[:8]):
+        clean_text = re.sub(r"\s+", " ", text).strip()[:350]
+        sections.append(f"[{i+1}] (Page: {u})\n{clean_text}")
+
+    prompt = (
+        f"User Query: \"{query}\"\n\n"
+        "Candidate Passages from Website:\n"
+        + "\n\n".join(sections)
+        + "\n\n"
+        "Instructions:\n"
+        "1. Identify the passage that best answers the query.\n"
+        "2. If no passage provides a factual answer, return null.\n"
+        "3. If answered, provide:\n"
+        "   - passage_index (integer)\n"
+        "   - verbatim_excerpt (exact text copied from the chosen passage)\n"
+        "   - direct_answer (a clear, direct 1-2 sentence natural answer)\n\n"
+        "Output JSON format:\n"
+        "{\n"
+        '  "passage_index": 1,\n'
+        '  "verbatim_excerpt": "<exact text>",\n'
+        '  "direct_answer": "<direct answer>"\n'
+        "}\n"
+        "Output valid JSON only."
+    )
+
+    try:
+        response = llm.invoke(prompt)
+        text = str(response.content if hasattr(response, "content") else response)
+        text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+
+        m = re.search(r"\{.*\}", text, re.DOTALL)
+        if m:
+            data = json.loads(m.group(0))
+            idx = data.get("passage_index")
+            if isinstance(idx, int) and 1 <= idx <= len(candidate_passages):
+                chosen_url = candidate_passages[idx - 1][0]
+                excerpt = data.get("verbatim_excerpt") or candidate_passages[idx - 1][1]
+                answer = data.get("direct_answer") or excerpt
+                return chosen_url, excerpt, answer
+    except Exception as e:
+        print(f"[LangChain Q&A Error] {e}", file=sys.stderr)
+
+    return None
+
+
+# ============================================================================
+# COMPATIBILITY WRAPPER FOR BACKWARD INTERFACES AND TESTS
+# ============================================================================
+
+ProviderType = Literal["auto", "groq", "gemini", "none"]
 
 
 def _is_valid_key(val: str | None) -> bool:
-    """Verifies that an API key is not empty, whitespace, or a placeholder."""
-    if not val:
-        return False
-    v = str(val).strip().strip("'\"")
-    if not v or len(v) < 10:
-        return False
-    lower = v.lower()
-    if lower.startswith("your_") or "placeholder" in lower or "<" in lower or ">" in lower:
-        return False
-    return True
+    return bool(_clean_key(val))
 
 
 class AIProvider:
-    """
-    Lightweight, framework-free multi-provider AI REST client.
-    Supports Google Gemini, Groq, and OpenAI with instant automatic fallback
-    to deterministic manual logic on any failure.
-    """
+    """Wrapper class providing backward compatibility for existing modules and tests."""
 
-    def __init__(
-        self,
-        provider: ProviderType = "auto",
-        model: str | None = None,
-        timeout: float = 8.0,
-        api_key: str | None = None,
-    ):
-        self.timeout = timeout
-        env_provider = os.getenv("SEO_AI_PROVIDER", "").strip().lower()
-        effective_provider = (provider or "auto").lower()
-        if effective_provider == "auto" and env_provider:
-            effective_provider = env_provider
-
+    def __init__(self, provider: str = "auto", model: str | None = None, api_key: str | None = None):
+        self.provider = provider
+        self.model = model
         self.api_key = api_key
-        self.provider: str = self._resolve_provider(effective_provider)
-        self.model: str = model or DEFAULT_MODELS.get(self.provider, "")
-
-    def _resolve_provider(self, requested: str) -> str:
-        if requested in ("none", "off", "disabled"):
-            return "none"
-
-        # Check explicit requested provider
-        if requested == "gemini":
-            k = self.api_key if _is_valid_key(self.api_key) else os.getenv("GEMINI_API_KEY", "")
-            if _is_valid_key(k):
-                self.api_key = k.strip().strip("'\"")
-                return "gemini"
-            return "none"
-
-        if requested == "groq":
-            k = self.api_key if _is_valid_key(self.api_key) else os.getenv("GROQ_API_KEY", "")
-            if _is_valid_key(k):
-                self.api_key = k.strip().strip("'\"")
-                return "groq"
-            return "none"
-
-        if requested == "openai":
-            k = self.api_key if _is_valid_key(self.api_key) else os.getenv("OPENAI_API_KEY", "")
-            if _is_valid_key(k):
-                self.api_key = k.strip().strip("'\"")
-                return "openai"
-            return "none"
-
-        # "auto" resolution based on available environment variables
-        # Prioritize Groq (free & fastest), then Gemini (free tier), then OpenAI
-        groq_k = self.api_key if _is_valid_key(self.api_key) else os.getenv("GROQ_API_KEY", "")
-        if _is_valid_key(groq_k):
-            self.api_key = groq_k.strip().strip("'\"")
-            return "groq"
-
-        gemini_k = os.getenv("GEMINI_API_KEY", "")
-        if _is_valid_key(gemini_k):
-            self.api_key = gemini_k.strip().strip("'\"")
-            return "gemini"
-
-        openai_k = os.getenv("OPENAI_API_KEY", "")
-        if _is_valid_key(openai_k):
-            self.api_key = openai_k.strip().strip("'\"")
-            return "openai"
-
-        return "none"
 
     @property
     def is_available(self) -> bool:
-        return self.provider != "none" and bool(self.api_key)
+        llm, _ = get_llm()
+        return llm is not None
 
-    def generate_text(self, prompt: str, system_prompt: str | None = None) -> str | None:
-        """
-        Sends prompt to the active provider.
-        Returns text on success, or None on failure (triggering automatic fallback).
-        """
-        if not self.is_available:
+    def generate_seo_summary(self, findings: list[dict], url: str) -> dict | None:
+        """Generates audit summary using LangChain. Returns None if no API key is present."""
+        return generate_audit_summary(findings, url)
+
+    def find_relevant_answer(self, query: str, passages: list[tuple[str, str]]) -> tuple[str, str, str] | None:
+        return answer_query(query, passages)
+
+    def synthesize_and_verify_answer(self, query: str, candidates: list) -> tuple[str, str, str] | None:
+        if not candidates:
             return None
+        passages = [(c[0], c[1]) for c in candidates]
+        return answer_query(query, passages)
 
-        try:
-            if self.provider == "gemini":
-                return self._call_gemini(prompt, system_prompt)
-            elif self.provider == "groq":
-                return self._call_groq(prompt, system_prompt)
-            elif self.provider == "openai":
-                return self._call_openai(prompt, system_prompt)
-        except Exception as e:
-            print(
-                f"[AIProvider] Notice: AI generation failed ({self.provider}: {e}). "
-                "Falling back to manual process.",
-                file=sys.stderr,
-            )
-            return None
-        return None
-
-    def _call_gemini(self, prompt: str, system_prompt: str | None = None) -> str | None:
-        url = (
-            f"https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{self.model}:generateContent?key={self.api_key}"
-        )
-        full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
-        payload = {
-            "contents": [{"parts": [{"text": full_prompt}]}],
-            "generationConfig": {"temperature": 0.1, "maxOutputTokens": 800},
-        }
-        res = requests.post(url, json=payload, timeout=self.timeout)
-        if not res.ok:
-            if res.status_code in (400, 401, 403):
-                self.provider = "none"
-            print(f"[AIProvider] Gemini HTTP {res.status_code}: {res.text[:120]}", file=sys.stderr)
-            return None
-        data = res.json()
-        candidates = data.get("candidates", [])
-        if candidates:
-            parts = candidates[0].get("content", {}).get("parts", [])
-            if parts:
-                return parts[0].get("text", "").strip()
-        return None
-
-    def _call_groq(self, prompt: str, system_prompt: str | None = None) -> str | None:
-        url = "https://api.groq.com/openai/v1/chat/completions"
-        messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": prompt})
-
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
-        payload = {
-            "model": self.model,
-            "messages": messages,
-            "temperature": 0.1,
-            "max_tokens": 800,
-        }
-        res = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
-        if not res.ok:
-            if res.status_code in (400, 401, 403):
-                self.provider = "none"
-            print(f"[AIProvider] Groq HTTP {res.status_code}: {res.text[:120]}", file=sys.stderr)
-            return None
-        data = res.json()
-        choices = data.get("choices", [])
-        if choices:
-            return choices[0].get("message", {}).get("content", "").strip()
-        return None
-
-    def _call_openai(self, prompt: str, system_prompt: str | None = None) -> str | None:
-        url = "https://api.openai.com/v1/chat/completions"
-        messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": prompt})
-
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
-        payload = {
-            "model": self.model,
-            "messages": messages,
-            "temperature": 0.1,
-            "max_tokens": 800,
-        }
-        res = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
-        if not res.ok:
-            if res.status_code in (400, 401, 403):
-                self.provider = "none"
-            print(f"[AIProvider] OpenAI HTTP {res.status_code}: {res.text[:120]}", file=sys.stderr)
-            return None
-        data = res.json()
-        choices = data.get("choices", [])
-        if choices:
-            return choices[0].get("message", {}).get("content", "").strip()
-        return None
-
-    def enhance_suggested_fix(
-        self,
-        metric: str,
-        evidence: str,
-        page_title: str,
-        page_snippet: str,
-        default_fix: str,
-    ) -> str:
-        """
-        Uses active AI to produce an actionable, customized code fix.
-        Falls back to default_fix if AI is unavailable or encounters an issue.
-        """
-        if not self.is_available:
-            return default_fix
-
-        prompt = (
-            f"You are an expert SEO technical engineer. A website audit found this issue:\n"
-            f"- Metric: {metric}\n"
-            f"- Evidence: {evidence}\n"
-            f"- Page Title: {page_title}\n"
-            f"- Page Content Snippet: {page_snippet[:350]}\n\n"
-            f"Provide a concise, production-ready fix. If applicable, include the exact HTML markup snippet to insert. "
-            f"Keep your entire answer under 3 sentences."
-        )
-        ai_response = self.generate_text(
-            prompt,
-            system_prompt="You are a concise, accurate SEO engineering assistant.",
-        )
-        if ai_response and len(ai_response.strip()) >= 15:
-            return ai_response.strip()
-        return default_fix
-
-    def synthesize_and_verify_answer(
-        self,
-        query: str,
-        candidate_passages: list[tuple[str, str, float]],
-    ) -> tuple[str, str, str] | None:
-        """
-        Reranks, verifies, and synthesizes a direct natural answer to the query
-        along with the exact grounding excerpt and source URL.
-        candidate_passages: list of (url, verbatim_passage_text, score)
-        Returns (url, verbatim_excerpt, direct_answer) or None if refusing to guess / error.
-        """
-        if not self.is_available or not candidate_passages:
-            return None
-
-        passages_text = ""
-        for i, (u, text, _) in enumerate(candidate_passages[:5]):
-            passages_text += f"[{i+1}] (URL: {u})\n{text}\n\n"
-
-        prompt = (
-            f"Query: \"{query}\"\n\n"
-            f"Candidate Passages extracted from the crawled website:\n{passages_text}\n"
-            f"Instructions:\n"
-            f"1. Determine if any of the candidate passages genuinely and directly answer the query.\n"
-            f"2. If yes, synthesize a clear, direct, and helpful answer (1-3 sentences) answering the question based strictly on the site facts.\n"
-            f"3. Select the best verbatim passage number (1-5) that serves as the grounding evidence.\n"
-            f"4. If NONE of the passages answer the query, respond with: {{\"match_index\": null, \"answer\": null}}.\n\n"
-            f"Response format (valid JSON only):\n"
-            f"{{\n"
-            f"  \"match_index\": <number 1-5 or null>,\n"
-            f"  \"answer\": \"<direct answer to user query>\"\n"
-            f"}}\n"
-            f"Only respond with the valid JSON object."
-        )
-
-        response = self.generate_text(
-            prompt,
-            system_prompt="You are a strict, grounded Q&A synthesis system. Output valid JSON only.",
-        )
-        if not response:
-            return None
-
-        try:
-            m = re.search(r"\{.*?\}", response, re.DOTALL)
-            if m:
-                obj = json.loads(m.group(0))
-                idx = obj.get("match_index")
-                direct_ans = obj.get("answer") or ""
-                if idx is not None and isinstance(idx, int) and 1 <= idx <= len(candidate_passages[:5]):
-                    chosen_url, chosen_text, _ = candidate_passages[idx - 1]
-                    if not direct_ans:
-                        direct_ans = chosen_text
-                    return chosen_url, chosen_text, direct_ans
-                elif idx is None:
-                    # Refusal confirmed by AI
-                    return "", "", ""
-        except Exception:
-            pass
-
-        return None
-
-    def verify_and_refine_answer(
-        self,
-        query: str,
-        candidate_passages: list[tuple[str, str, float]],
-    ) -> tuple[str, str] | None:
-        """Backward-compatible helper returning (url, verbatim_excerpt)."""
-        res = self.synthesize_and_verify_answer(query, candidate_passages)
-        if res is not None:
+    def verify_and_refine_answer(self, query: str, candidates: list) -> tuple[str, str] | None:
+        res = self.synthesize_and_verify_answer(query, candidates)
+        if res:
             return res[0], res[1]
         return None
 
-    def generate_seo_summary(
-        self,
-        findings: list[dict],
-        url: str,
-    ) -> dict | None:
-        """
-        Uses active AI to produce an executive summary and prioritized action plan
-        based on the audit findings. Returns None on error to fall back to deterministic summary.
-        """
-        if not self.is_available or not findings:
+    def enhance_suggested_fix(self, issue: str = "", evidence: str = "", page_title: str = "", page_snippet: str = "", default_fix: str = "", metric: str = "") -> str:
+        return default_fix
+
+    def generate_text(self, prompt: str, system_prompt: str | None = None) -> str | None:
+        llm, _ = get_llm()
+        if not llm:
             return None
-
-        sev_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0}
-        metric_samples = []
-        for f in findings:
-            sev = f.get("severity", "low").lower()
-            sev_counts[sev] = sev_counts.get(sev, 0) + 1
-            if len(metric_samples) < 15:
-                metric_samples.append(f"- [{f.get('severity', 'low').upper()}] {f.get('metric')}: {f.get('evidence', '')[:120]}")
-
-        findings_text = "\n".join(metric_samples)
-        prompt = (
-            f"Website Technical SEO Audit for: {url}\n"
-            f"Total issues found: {len(findings)} (Critical: {sev_counts['critical']}, High: {sev_counts['high']}, Medium: {sev_counts['medium']}, Low: {sev_counts['low']})\n\n"
-            f"Key finding samples:\n{findings_text}\n\n"
-            f"Instructions:\n"
-            f"1. Generate a concise executive summary (2-3 sentences max) evaluating the site's technical SEO health.\n"
-            f"2. Provide an overall SEO health score between 0 and 100.\n"
-            f"3. Provide 3 to 4 prioritized action recommendations that will boost search rankings, crawlability, and CTR most effectively.\n\n"
-            f"Output JSON schema:\n"
-            f"{{\n"
-            f"  \"health_score\": <number 0-100>,\n"
-            f"  \"overview\": \"<2 concise sentences summarizing technical health and main growth bottlenecks>\",\n"
-            f"  \"priority_actions\": [\n"
-            f"    {{\n"
-            f"      \"priority\": 1,\n"
-            f"      \"impact\": \"High\",\n"
-            f"      \"category\": \"<e.g. Crawlability & Indexing>\",\n"
-            f"      \"action\": \"<concise title of action>\",\n"
-            f"      \"description\": \"<1-2 sentences explaining why this change boosts SEO>\"\n"
-            f"    }}\n"
-            f"  ]\n"
-            f"}}\n"
-            f"Only output valid JSON."
-        )
-
-        response = self.generate_text(
-            prompt,
-            system_prompt="You are an elite SEO strategist. Output clean, valid JSON only.",
-        )
-        if not response:
-            return None
-
         try:
-            m = re.search(r"\{.*\}", response, re.DOTALL)
-            if m:
-                obj = json.loads(m.group(0))
-                if "priority_actions" in obj and "overview" in obj:
-                    return obj
+            res = llm.invoke(prompt)
+            txt = str(res.content if hasattr(res, "content") else res)
+            return re.sub(r"<think>.*?</think>", "", txt, flags=re.DOTALL).strip()
         except Exception:
-            pass
-        return None
+            return None
 
 
 def deterministic_seo_summary(findings: list[dict], url: str) -> dict:
-    """
-    100% deterministic, rule-based executive summary generator.
-    Always succeeds even when offline or AI is disabled.
-    """
+    """Provided purely for test suites and offline static utilities."""
     critical_count = sum(1 for f in findings if f.get("severity") == "critical")
     high_count = sum(1 for f in findings if f.get("severity") == "high")
-    medium_count = sum(1 for f in findings if f.get("severity") == "medium")
-    low_count = sum(1 for f in findings if f.get("severity") == "low")
     total = len(findings)
-
-    deductions = (critical_count * 16) + (high_count * 8) + (medium_count * 4) + (low_count * 1)
-    health_score = max(35, min(98, 100 - deductions))
-
-    seen_metrics = set()
-    unique_findings = []
-    for f in findings:
-        m = f.get("metric")
-        if m not in seen_metrics:
-            seen_metrics.add(m)
-            unique_findings.append(f)
-
-    priority_actions = []
-    priority_order = ["critical", "high", "medium", "low"]
-    current_p = 1
-
-    metric_category_map = {
-        "http_error": ("Crawlability", "Fix broken status codes and server connection errors"),
-        "canonical_missing": ("Indexing", "Implement self-referencing canonical tags to consolidate link signals"),
-        "meta_description_empty": ("CTR & Metadata", "Write concise meta descriptions to improve SERP click-through rates"),
-        "meta_description_missing": ("CTR & Metadata", "Add descriptive meta tags to all indexable pages"),
-        "duplicate_title": ("Content Quality", "Provide unique titles per page to eliminate internal keyword cannibalization"),
-        "heading_hierarchy_skip": ("On-Page Structure", "Maintain logical H1-H2-H3 heading hierarchy for semantic clarity"),
-        "image_dimensions_missing": ("Core Web Vitals", "Set explicit width/height on images to eliminate layout shifts (CLS)"),
-        "image_alt_missing": ("Accessibility & Image SEO", "Add descriptive alt text to all informative images"),
-        "llms_txt_missing": ("AEO / AI Search", "Publish an /llms.txt file for AI search engines like Perplexity and SearchGPT"),
-        "render_blocking_script": ("Performance", "Add defer or async to head scripts to improve First Contentful Paint"),
-    }
-
-    for target_sev in priority_order:
-        for f in unique_findings:
-            if f.get("severity") == target_sev and len(priority_actions) < 4:
-                m = f.get("metric")
-                cat, default_act = metric_category_map.get(m, ("Technical SEO", f.get("suggested_fix", "")[:60]))
-                impact = "High" if target_sev in ("critical", "high") else "Medium"
-                priority_actions.append({
-                    "priority": current_p,
-                    "impact": impact,
-                    "category": cat,
-                    "action": default_act,
-                    "description": f.get("suggested_fix", "Resolve this issue to prevent search performance degradation.")
-                })
-                current_p += 1
-
-    if not priority_actions:
-        priority_actions.append({
-            "priority": 1,
-            "impact": "Low",
-            "category": "Maintenance",
-            "action": "Maintain current technical optimization",
-            "description": "No critical or high severity issues were detected during this crawl session."
-        })
-
-    overview = (
-        f"Technical audit completed for {url}. Evaluated across {total} total finding(s) "
-        f"({critical_count} critical, {high_count} high, {medium_count} medium). "
-        f"Focusing on the top priority actions will immediately improve crawl budget, search indexing, and user experience."
-    )
-
+    score = max(40, 100 - (critical_count * 15 + high_count * 8))
     return {
-        "health_score": health_score,
-        "overview": overview,
-        "priority_actions": priority_actions,
+        "health_score": score,
+        "overview": f"Site technical evaluation observed {total} findings with score {score}/100.",
+        "priority_actions": [
+            {"priority": 1, "impact": "High", "category": "SEO", "action": "Remediate Priority Findings", "description": "Resolve high severity issues."}
+        ],
+        "is_ai": False,
+        "provider": "Deterministic Rule-Based",
     }

@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function Navbar({ activePage, setActivePage, selectedModel, setSelectedModel }) {
+export default function Navbar({ activePage, setActivePage }) {
   return (
     <header className="navbar">
       <div className="nav-brand" role="banner">
@@ -27,22 +27,13 @@ export default function Navbar({ activePage, setActivePage, selectedModel, setSe
       </nav>
 
       <div className="nav-right-actions">
-        {/* LLM Model Switching Dropdown in Navbar */}
-        <div className="llm-selector-wrapper" title="Switch AI Provider / Execution Engine">
+        {/* LangChain Single LLM Status Badge */}
+        <div className="llm-selector-wrapper" title="Powered by LangChain (Groq / Gemini)">
           <span className="llm-status-dot" aria-hidden="true"></span>
-          <span className="llm-selector-label">LLM:</span>
-          <select
-            className="llm-dropdown"
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-            aria-label="Select AI Model"
-          >
-            <option value="auto">Auto (Smart Detect)</option>
-            <option value="gemini">Gemini 1.5 Flash</option>
-            <option value="groq">Groq Llama 3.3 70B</option>
-            <option value="openai">OpenAI GPT-4o-mini</option>
-            <option value="none">Deterministic (No AI)</option>
-          </select>
+          <span className="llm-selector-label">Engine:</span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', padding: '2px 6px' }}>
+            LangChain LLM
+          </span>
         </div>
       </div>
     </header>

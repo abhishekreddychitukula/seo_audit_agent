@@ -873,6 +873,364 @@ a {
   color: var(--text-primary);
 }
 
+/* NAP Dual-Tab & Off-Site Citations Styles */
+.nap-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.nap-tab-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 4px;
+}
+
+.nap-tab-pills {
+  display: inline-flex;
+  gap: 6px;
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 4px;
+}
+
+.nap-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s var(--ease-smooth);
+}
+
+.nap-tab-btn:hover {
+  color: var(--text-primary);
+}
+
+.nap-tab-btn.active {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.nap-tab-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--accent-light);
+  color: var(--accent);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.nap-score-pill {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--badge-low-bg);
+  color: var(--badge-low-text);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.nap-offsite-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.nap-offsite-banner {
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+}
+
+@media (max-width: 768px) {
+  .nap-offsite-banner {
+    flex-direction: column;
+  }
+}
+
+.nap-canonical-box {
+  flex: 1;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.nap-canonical-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+
+.nap-canonical-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--text-primary);
+}
+
+.nap-canonical-grid span {
+  color: var(--text-secondary);
+}
+
+.nap-offsite-score-card {
+  min-width: 200px;
+  background: linear-gradient(135deg, #182019 0%, #0F1410 100%);
+  border: 1px solid #2B3A2C;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.nap-score-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #81C784;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.nap-score-val {
+  font-size: 28px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 6px 0;
+  letter-spacing: -0.02em;
+}
+
+.nap-agent-tool-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #A5D6A7;
+  opacity: 0.9;
+}
+
+.nap-offsite-summary {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+}
+
+.nap-summary-header {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nap-summary-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.nap-no-llm-banner {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  color: #92400E;
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.nap-citations-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nap-citations-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nap-citations-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+.nap-citations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+}
+
+.nap-citation-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.2s var(--ease-smooth), box-shadow 0.2s var(--ease-smooth);
+}
+
+.nap-citation-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.nap-citation-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.nap-citation-source {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.nap-citation-link {
+  display: inline-block;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--accent);
+  text-decoration: none;
+  margin-top: 3px;
+  word-break: break-all;
+}
+
+.nap-citation-link:hover {
+  text-decoration: underline;
+}
+
+.nap-match-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+}
+
+.nap-match-badge.consistent {
+  background: var(--badge-low-bg);
+  color: var(--badge-low-text);
+}
+
+.nap-match-badge.partial {
+  background: var(--badge-high-bg);
+  color: var(--badge-high-text);
+}
+
+.nap-match-badge.mismatch {
+  background: var(--badge-critical-bg);
+  color: var(--badge-critical-text);
+}
+
+.nap-match-badge.not_listed {
+  background: var(--bg-muted);
+  color: var(--text-tertiary);
+}
+
+.nap-citation-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  background: var(--bg-canvas);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.nap-detail-row {
+  display: flex;
+  gap: 6px;
+}
+
+.nap-detail-lbl {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  width: 58px;
+  flex-shrink: 0;
+}
+
+.nap-detail-val {
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.nap-citation-note {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 8px;
+}
+
+.nap-empty-citations {
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+
+.nap-recs-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.nap-recs-header {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.nap-recs-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
 /* Q3 AEO Q&A Visualizer */
 .qa-result-box {
   display: flex;
@@ -1450,4 +1808,97 @@ a {
   font-size: 13px;
   color: var(--text-secondary);
   line-height: 1.5;
+}
+
+/* Engine Badges & Issue Labels */
+.engine-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+}
+
+.engine-badge.ai-generated {
+  background: #EAF4EC;
+  color: #1F4D2B;
+  border: 1px solid #C4DFC8;
+}
+
+.engine-badge.deterministic {
+  background: #F4F5F7;
+  color: #4A5568;
+  border: 1px solid #D2D6DC;
+}
+
+.engine-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.engine-dot.green {
+  background: #2E7D32;
+  box-shadow: 0 0 5px rgba(46, 125, 50, 0.5);
+}
+
+.engine-dot.orange {
+  background: #D97706;
+}
+
+.engine-small-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.engine-small-tag.ai {
+  background: #EAF4EC;
+  color: #1F4D2B;
+  border: 1px solid #C4DFC8;
+}
+
+.engine-small-tag.det {
+  background: #F4F5F7;
+  color: #4A5568;
+  border: 1px solid #D2D6DC;
+}
+
+.finding-issue-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.finding-issue-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 1px 5px;
+  background: #EFEFEF;
+  color: #555555;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.finding-issue-title {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.finding-url-label {
+  font-weight: 600;
+  color: var(--text-secondary);
 }

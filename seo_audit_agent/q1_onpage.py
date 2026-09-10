@@ -8,13 +8,60 @@ from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup, Tag
 
-from .ai_provider import AIProvider, ProviderType
-from .crawler import Page, SiteCrawler
+try:
+    from .ai_provider import AIProvider, ProviderType
+    from .crawler import Page, SiteCrawler
+except (ImportError, ValueError):
+    import sys
+    from pathlib import Path
+    _pkg_dir = str(Path(__file__).resolve().parent)
+    if _pkg_dir not in sys.path:
+        sys.path.insert(0, _pkg_dir)
+    from ai_provider import AIProvider, ProviderType
+    from crawler import Page, SiteCrawler
+
+
+ISSUE_TITLES = {
+    "title_missing": "Missing Page Title",
+    "title_too_long": "Title Too Long (>60 Chars)",
+    "title_too_short": "Title Too Short (<10 Chars)",
+    "title_duplicate": "Duplicate Page Title",
+    "meta_description_missing": "Missing Meta Description",
+    "meta_description_too_long": "Meta Description Too Long (>160 Chars)",
+    "meta_description_too_short": "Meta Description Too Short (<50 Chars)",
+    "meta_description_duplicate": "Duplicate Meta Description",
+    "h1_missing": "Missing H1 Primary Heading",
+    "h1_multiple": "Multiple H1 Headings on Page",
+    "heading_hierarchy_skip": "Skipped Heading Level Hierarchy",
+    "images_missing_alt": "Missing Image Alt Text",
+    "image_dimensions_missing": "Missing Image Dimensions (CLS Risk)",
+    "broken_internal_links": "Broken Internal Link (404)",
+    "broken_external_links": "Broken External Link",
+    "robots_noindex": "Noindex Directive Present",
+    "canonical_missing": "Missing Canonical Tag",
+    "canonical_mismatch": "Canonical URL Mismatch",
+    "structured_data_missing": "Missing Structured Data (Schema.org)",
+    "structured_data_invalid": "Invalid Structured Data",
+    "open_graph_missing": "Missing Open Graph Metadata",
+    "twitter_card_missing": "Missing Twitter Card Metadata",
+    "click_depth_high": "Deep Page Architecture (Click Depth > 3)",
+    "redirect_chain": "Multi-Hop Redirect Chain",
+    "orphan_page_in_sitemap": "Orphan Page in Sitemap",
+    "llms_txt_missing": "Missing /llms.txt AI File",
+    "ai_crawler_blocked": "Robots.txt Blocks AI Crawlers",
+    "excessive_dom_size": "Excessive DOM Size",
+    "render_blocking_script": "Render-Blocking Script in <head>",
+}
+
+
+def format_issue_name(metric: str) -> str:
+    return ISSUE_TITLES.get(metric, metric.replace("_", " ").title())
 
 
 def finding(metric: str, page: str, severity: str, evidence: str, suggested_fix: str) -> dict:
     return {
         "metric": metric,
+        "issue": format_issue_name(metric),
         "page": page,
         "severity": severity,
         "evidence": evidence,
@@ -601,10 +648,10 @@ def audit(
                     p_title = s_tmp.title.get_text(strip=True) if s_tmp.title else ""
 
                 enhanced = ai.enhance_suggested_fix(
-                    metric=f_item["metric"],
+                    issue=f_item.get("issue") or f_item["metric"],
                     evidence=f_item["evidence"],
                     page_title=p_title,
-                    page_snippet=p_text[:400],
+                    page_snippet=p_text[:300],
                     default_fix=f_item["suggested_fix"],
                 )
                 if enhanced and enhanced != f_item["suggested_fix"]:

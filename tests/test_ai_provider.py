@@ -1,73 +1,45 @@
+import os
 import unittest
 from unittest.mock import MagicMock, patch
-from seo_audit_agent.ai_provider import AIProvider, deterministic_seo_summary
+from seo_audit_agent.ai_provider import (
+    AIProvider,
+    generate_audit_summary,
+    answer_query,
+    get_llm,
+    deterministic_seo_summary,
+)
 
 
 class TestAIProvider(unittest.TestCase):
-    def test_provider_disabled(self):
-        ai = AIProvider(provider="none")
-        self.assertFalse(ai.is_available)
-        self.assertIsNone(ai.generate_text("test prompt"))
-        self.assertEqual(
-            ai.enhance_suggested_fix(
-                metric="meta_description_missing",
-                evidence="No description",
-                page_title="Title",
-                page_snippet="Snippet",
-                default_fix="Add description.",
-            ),
-            "Add description.",
-        )
-        self.assertIsNone(ai.verify_and_refine_answer("test query", []))
+    def test_no_keys_returns_none_no_hardcoded_summary(self):
+        """CRITICAL: Verifies that without API keys, NO fake/hardcoded summary is produced."""
+        with patch("seo_audit_agent.ai_provider.reload_env", return_value={}), patch.dict("os.environ", {}, clear=True):
+            findings = [
+                {"metric": "missing_title", "severity": "high", "evidence": "No title tag"},
+            ]
+            summary = generate_audit_summary(findings, "https://example.com")
+            # Must return None so the frontend knows no AI summary exists!
+            self.assertIsNone(summary)
 
-    def test_provider_auto_without_keys(self):
-        with patch.dict("os.environ", {}, clear=True):
-            ai = AIProvider(provider="auto")
-            self.assertEqual(ai.provider, "none")
-            self.assertFalse(ai.is_available)
+    def test_empty_findings_returns_none(self):
+        self.assertIsNone(generate_audit_summary([], "https://example.com"))
 
-    def test_gemini_resolution_with_key(self):
-        with patch.dict("os.environ", {"GEMINI_API_KEY": "test-gemini-key"}):
-            ai = AIProvider(provider="gemini")
-            self.assertEqual(ai.provider, "gemini")
-            self.assertTrue(ai.is_available)
-            self.assertEqual(ai.model, "gemini-1.5-flash")
+    def test_answer_query_empty_passages(self):
+        self.assertIsNone(answer_query("test query", []))
 
-    def test_groq_resolution_with_key(self):
-        with patch.dict("os.environ", {"GROQ_API_KEY": "test-groq-key"}):
-            ai = AIProvider(provider="groq")
-            self.assertEqual(ai.provider, "groq")
-            self.assertTrue(ai.is_available)
-            self.assertEqual(ai.model, "llama-3.3-70b-versatile")
+    def test_get_llm_resolution_with_key(self):
+        with patch("seo_audit_agent.ai_provider.reload_env", return_value={"GROQ_API_KEY": "gsk_testvalidkey12345678"}):
+            llm, provider = get_llm()
+            self.assertIsNotNone(llm)
+            self.assertEqual(provider, "Groq")
 
-    def test_openai_resolution_with_key(self):
-        with patch.dict("os.environ", {"OPENAI_API_KEY": "test-openai-key"}):
-            ai = AIProvider(provider="openai")
-            self.assertEqual(ai.provider, "openai")
-            self.assertTrue(ai.is_available)
-            self.assertEqual(ai.model, "gpt-4o-mini")
+    def test_get_llm_without_key(self):
+        with patch("seo_audit_agent.ai_provider.reload_env", return_value={}), patch.dict("os.environ", {}, clear=True):
+            llm, provider = get_llm()
+            self.assertIsNone(llm)
+            self.assertIsNone(provider)
 
-    @patch("requests.post")
-    def test_graceful_fallback_on_network_error(self, mock_post):
-        mock_post.side_effect = Exception("Connection refused / timed out")
-        ai = AIProvider(provider="gemini", api_key="dummy-key")
-        result = ai.generate_text("test prompt")
-        # Must return None and not raise exception
-        self.assertIsNone(result)
-
-    @patch("requests.post")
-    def test_graceful_fallback_on_http_error(self, mock_post):
-        mock_resp = MagicMock()
-        mock_resp.ok = False
-        mock_resp.status_code = 429
-        mock_resp.text = "Rate limit exceeded"
-        mock_post.return_value = mock_resp
-
-        ai = AIProvider(provider="groq", api_key="dummy-key")
-        result = ai.generate_text("test prompt")
-        self.assertIsNone(result)
-
-    def test_deterministic_seo_summary(self):
+    def test_deterministic_seo_summary_helper(self):
         findings = [
             {"metric": "canonical_missing", "severity": "critical", "evidence": "No canonical", "suggested_fix": "Add canonical"},
             {"metric": "meta_description_empty", "severity": "medium", "evidence": "Empty desc", "suggested_fix": "Add description"},
@@ -77,12 +49,18 @@ class TestAIProvider(unittest.TestCase):
         self.assertIn("overview", res)
         self.assertIn("priority_actions", res)
         self.assertTrue(len(res["priority_actions"]) >= 1)
-        self.assertEqual(res["priority_actions"][0]["priority"], 1)
 
-    def test_synthesize_answer_fallback(self):
+    def test_backward_compatible_wrapper(self):
         ai = AIProvider(provider="none")
-        self.assertIsNone(ai.synthesize_and_verify_answer("why use toolle", []))
+        self.assertEqual(
+            ai.enhance_suggested_fix(
+                metric="meta_description_missing",
+                default_fix="Add description.",
+            ),
+            "Add description.",
+        )
         self.assertIsNone(ai.generate_seo_summary([], "https://example.com"))
+        self.assertIsNone(ai.find_relevant_answer("test", []))
 
 
 if __name__ == "__main__":

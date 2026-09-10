@@ -46,12 +46,9 @@ seo_audit_agent/
 │   ├── __init__.py
 │   ├── test_crawler.py    # URL normalization, robots, and priority routing tests
 │   ├── test_q1_onpage.py  # Synthetic HTML tests for all on-page SEO metrics
-│   ├── test_nap.py        # Normalization and mismatch detection unit tests
+│   ├── test_nap.py        # In-site normalization and mismatch detection unit tests
+│   ├── test_nap_offsite.py # Off-site citation audit & tool-calling tests
 │   └── test_q3_grounded_qa.py # Stemming, BM25 ranking, and refusal tests
-├── demo_outputs/          # Demonstration deliverables against live target
-│   ├── audit.json
-│   ├── nap_report.json
-│   └── answer.json
 ├── requirements.txt
 └── README.md
 ```
@@ -250,25 +247,20 @@ python -m seo_audit_agent.cli q3 <TARGET_URL> "<NATURAL_LANGUAGE_QUERY>" -o answ
 
 ## Demonstration Run
 
-The demonstration run was executed live against the public target URL:
+The demonstration run can be executed against any live target or public portal:
 `https://books.toscrape.com/`
 
-### Commands Run:
+### Example Commands:
 ```bash
-# Question 1
-python -m seo_audit_agent.cli q1 https://books.toscrape.com -o demo_outputs/audit.json --max-pages 25
+# Question 1: On-Page SEO Crawl & Audit
+python -m seo_audit_agent.cli q1 https://books.toscrape.com -o audit.json --max-pages 25
 
-# Question 2
-python -m seo_audit_agent.cli q2 https://books.toscrape.com -o demo_outputs/nap_report.json --max-pages 25
+# Question 2: In-Site & Off-Site NAP Consistency
+python -m seo_audit_agent.cli q2 https://books.toscrape.com -o nap_report.json --max-pages 25
 
-# Question 3
-python -m seo_audit_agent.cli q3 https://books.toscrape.com "What is the warning about prices and ratings on this website?" -o demo_outputs/answer.json --max-pages 25
+# Question 3: Grounded Answer Retrieval
+python -m seo_audit_agent.cli q3 https://books.toscrape.com "What is the warning about prices and ratings on this website?" -o answer.json --max-pages 25
 ```
-
-All three demonstration output files are saved in [`demo_outputs/`](file:///c:/Users/Abhishek%20%20Reddy%20.%20C/Downloads/seo_audit_agent_solution/seo_audit_agent/demo_outputs/):
-1. [`demo_outputs/audit.json`](file:///c:/Users/Abhishek%20%20Reddy%20.%20C/Downloads/seo_audit_agent_solution/seo_audit_agent/demo_outputs/audit.json): Contains comprehensive findings across 25 pages, uncovering empty meta descriptions, missing canonicals, heading hierarchy skips, and duplicate titles.
-2. [`demo_outputs/nap_report.json`](file:///c:/Users/Abhishek%20%20Reddy%20.%20C/Downloads/seo_audit_agent_solution/seo_audit_agent/demo_outputs/nap_report.json): Confirms the business name `"Books to Scrape"` consistently across all 25 pages with 0.90 confidence, while accurately reporting `not_found` for phone and address on this sandbox portal.
-3. [`demo_outputs/answer.json`](file:///c:/Users/Abhishek%20%20Reddy%20.%20C/Downloads/seo_audit_agent_solution/seo_audit_agent/demo_outputs/answer.json): Successfully extracts the verbatim alert text explaining that prices and ratings are randomly assigned, matching the user query with 100% precision and zero hallucination.
 
 ---
 

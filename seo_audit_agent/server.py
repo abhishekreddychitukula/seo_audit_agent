@@ -3,12 +3,24 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, urlparse
 
-from . import nap, q1_onpage, q3_grounded_qa
-from .ai_provider import AIProvider, _is_valid_key, deterministic_seo_summary
+try:
+    from . import nap, nap_offsite, q1_onpage, q3_grounded_qa
+    from .ai_provider import AIProvider, generate_audit_summary, reload_env
+    from .nap_offsite import audit_offsite_nap
+except (ImportError, ValueError):
+    import sys
+    from pathlib import Path
+    _pkg_dir = str(Path(__file__).resolve().parent)
+    if _pkg_dir not in sys.path:
+        sys.path.insert(0, _pkg_dir)
+    import nap, nap_offsite, q1_onpage, q3_grounded_qa
+    from ai_provider import AIProvider, generate_audit_summary, reload_env
+    from nap_offsite import audit_offsite_nap
 
 
 class APIHandler(BaseHTTPRequestHandler):
@@ -61,9 +73,13 @@ class APIHandler(BaseHTTPRequestHandler):
             self._send_json(404, {"error": "Endpoint not found"})
 
     def do_POST(self):
+        # Refresh .env dynamically so keys added or removed take effect immediately
+        reload_env()
         parsed = urlparse(self.path)
         body = self._parse_body()
         url = body.get("url", "").strip()
+        if url and not re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*://", url):
+            url = "https://" + url
 
         if not url and parsed.path.startswith("/api/"):
             self._send_json(400, {"error": "Missing 'url' parameter in JSON payload"})
@@ -84,11 +100,9 @@ class APIHandler(BaseHTTPRequestHandler):
                     max_pages=max_pages,
                     timeout=timeout,
                     concurrency=concurrency,
-                    ai_provider=ai_provider,
-                    ai_model=ai_model,
                 )
-                ai = AIProvider(provider=ai_provider, model=ai_model)
-                summary = ai.generate_seo_summary(findings, url) if ai.is_available else None
+                # Generate AI executive summary via LangChain (returns None if no key configured)
+                summary = generate_audit_summary(findings, url)
 
                 self._send_json(200, {
                     "task": "q1_onpage",
@@ -99,18 +113,24 @@ class APIHandler(BaseHTTPRequestHandler):
                 })
 
             elif parsed.path == "/api/nap":
-                # Question 2: NAP Consistency Checker (100% Rule-Based)
-                report = nap.run(
+                # Question 2: NAP Consistency Checker
+                # 1. In-site canonical & crawl consistency audit
+                in_site_report = nap.run(
                     url=url,
                     output=os.devnull,
                     max_pages=max_pages,
                     timeout=timeout,
                     concurrency=concurrency,
                 )
+                # 2. Autonomous off-site citation audit with search_web tool
+                off_site_report = audit_offsite_nap(url, in_site_report)
+
                 self._send_json(200, {
                     "task": "q2_nap",
                     "url": url,
-                    "fields": report,
+                    "in_site": in_site_report,
+                    "off_site": off_site_report,
+                    "fields": in_site_report,
                 })
 
             elif parsed.path == "/api/qa":

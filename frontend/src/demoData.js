@@ -3,6 +3,7 @@
 export const DEMO_Q1_AUDIT = [
   {
     metric: "llms_txt_missing",
+    issue: "Missing /llms.txt AI File",
     page: "https://books.toscrape.com/llms.txt",
     severity: "low",
     evidence: "No active /llms.txt found (HTTP status 404).",
@@ -10,6 +11,7 @@ export const DEMO_Q1_AUDIT = [
   },
   {
     metric: "meta_description_empty",
+    issue: "Empty Meta Description",
     page: "https://books.toscrape.com/",
     severity: "medium",
     evidence: "The <meta name=\"description\"> tag exists but its content attribute is empty.",
@@ -17,6 +19,7 @@ export const DEMO_Q1_AUDIT = [
   },
   {
     metric: "heading_hierarchy_skip",
+    issue: "Skipped Heading Level Hierarchy",
     page: "https://books.toscrape.com/",
     severity: "low",
     evidence: "Document contains 20 <h3> elements but no <h2> elements.",
@@ -24,6 +27,7 @@ export const DEMO_Q1_AUDIT = [
   },
   {
     metric: "canonical_missing",
+    issue: "Missing Canonical Tag",
     page: "https://books.toscrape.com/",
     severity: "medium",
     evidence: "No <link rel=\"canonical\"> tag found in the document <head>.",
@@ -31,6 +35,7 @@ export const DEMO_Q1_AUDIT = [
   },
   {
     metric: "image_dimensions_missing",
+    issue: "Missing Image Dimensions (CLS Risk)",
     page: "https://books.toscrape.com/",
     severity: "low",
     evidence: "20 image(s) lack explicit width/height attributes (Cumulative Layout Shift risk).",
@@ -38,6 +43,7 @@ export const DEMO_Q1_AUDIT = [
   },
   {
     metric: "structured_data_missing",
+    issue: "Missing Structured Data (Schema.org)",
     page: "https://books.toscrape.com/",
     severity: "low",
     evidence: "Homepage lacks Schema.org structured data (neither JSON-LD nor Microdata detected).",
@@ -45,6 +51,7 @@ export const DEMO_Q1_AUDIT = [
   },
   {
     metric: "duplicate_title",
+    issue: "Duplicate Page Title",
     page: "https://books.toscrape.com/",
     severity: "medium",
     evidence: "Title \"All products | Books to Scrape - Sandbox\" is identical across 2 crawled pages (['https://books.toscrape.com/', 'https://books.toscrape.com/index.html']).",
@@ -52,6 +59,7 @@ export const DEMO_Q1_AUDIT = [
   },
   {
     metric: "slow_server_response",
+    issue: "Slow Server Response Time",
     page: "https://books.toscrape.com/catalogue/category/books_1/index.html",
     severity: "low",
     evidence: "Server response time was 2.73s, exceeding the recommended 2.5s threshold.",
@@ -61,6 +69,8 @@ export const DEMO_Q1_AUDIT = [
 
 export const DEMO_Q1_SUMMARY = {
   health_score: 82,
+  is_ai: false,
+  provider: "Deterministic Rule-Based",
   overview: "Technical audit of books.toscrape.com identified 8 actionable opportunities across 25 crawled pages. Resolving missing canonical directives and empty meta descriptions will deliver immediate indexing clarity and CTR gains.",
   priority_actions: [
     {
@@ -141,6 +151,51 @@ export const DEMO_Q2_NAP = [
     verdict: "not_found"
   }
 ];
+
+export const DEMO_Q2_OFFSITE = {
+  status: "success",
+  citation_health_score: 82,
+  summary: "Autonomous web search detected external sandbox directory references and developer citations for Books to Scrape. While brand identity is uniformly maintained across developer listings, physical address and phone numbers are absent since this domain is maintained as an open web scraping playground.",
+  citations: [
+    {
+      source: "GitHub Community & Projects",
+      url: "https://github.com/topics/books-toscrape",
+      name: "Books to Scrape",
+      address: null,
+      phone: null,
+      match_status: "consistent",
+      discrepancy_details: "Matches in-site brand name perfectly. Referenced in open-source scraper repositories."
+    },
+    {
+      source: "ScrapingHub / Zyte Sandbox Directory",
+      url: "https://www.zyte.com/blog/web-scraping-sandbox-sites",
+      name: "Books to Scrape",
+      address: null,
+      phone: null,
+      match_status: "consistent",
+      discrepancy_details: "Referenced as canonical sandbox target for testing book catalog pagination and CSS selectors."
+    },
+    {
+      source: "DataCamp Community Tutorials",
+      url: "https://www.datacamp.com/tutorial/web-scraping-python-beautifulsoup",
+      name: "Books to Scrape Sandbox",
+      address: null,
+      phone: null,
+      match_status: "partial",
+      discrepancy_details: "Listing includes 'Sandbox' descriptor suffix; canonical name is 'Books to Scrape'."
+    }
+  ],
+  recommendations: [
+    "If migrating to a commercial bookstore, claim and verify a Google Business Profile listing.",
+    "Add Schema.org LocalBusiness or Bookstore JSON-LD markup on homepage to broadcast verified NAP signals.",
+    "Register consistent business citations on major directory aggregators (Bing Places, Apple Maps, Yelp)."
+  ],
+  in_site_canonical: {
+    name: "Books to Scrape",
+    address: "Not stated on website",
+    phone: "Not stated on website"
+  }
+};
 
 export const DEMO_Q3_QA = {
   query: "What is the warning about prices and ratings on this website?",
