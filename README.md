@@ -31,7 +31,17 @@ seo_audit_agent/
 │   ├── crawler.py         # Concurrent crawler with robots.txt, sitemaps, & link graph
 │   ├── q1_onpage.py       # Q1 On-page auditor (search engine crawler checks)
 │   ├── nap.py             # Q2 NAP extractor, multi-stage normalizer & consistency auditor
-│   └── q3_grounded_qa.py  # Q3 Grounded exact-passage retrieval (BM25 + refusal logic)
+│   ├── q3_grounded_qa.py  # Q3 Grounded exact-passage retrieval (BM25 + refusal logic)
+│   └── server.py          # Zero-dependency Python REST API server for web frontend
+├── frontend/              # Minimalist 2-page React + Vite frontend
+│   ├── src/
+│   │   ├── components/    # Navbar (brand, page switcher, navbar LLM switcher dropdown)
+│   │   ├── pages/         # LandingPage ("Check your site" CTA) & ConsolePage (floating search box)
+│   │   ├── demoData.js    # Pre-cached zero-latency demonstration datasets
+│   │   ├── App.jsx        # Root application controller
+│   │   └── index.css      # Handcrafted minimalist stone/carbon design system
+│   ├── package.json
+│   └── vite.config.js
 ├── tests/
 │   ├── __init__.py
 │   ├── test_crawler.py    # URL normalization, robots, and priority routing tests
@@ -48,16 +58,47 @@ seo_audit_agent/
 
 ---
 
+## Interactive Web Frontend (Minimalist 2-Page UI)
+
+In addition to the CLI, a clean, attractive, minimalist 2-page React frontend is provided (handcrafted CSS, no AI slop, subtle understated stone/carbon palette):
+1. **Public Landing Page**: Introduces the application with capabilities, architectural highlights, and a prominent **"Check your site"** CTA button.
+2. **Audit Console**: A focused, chatbot-style workspace featuring:
+   - **Floating Bottom Search Box**: Anchored at the bottom with a 3-mode action selector:
+     - `Crawl site for SEO issues` (Question 1)
+     - `NAP consistency checker` (Question 2)
+     - `AEO Q/A agent` (Question 3)
+   - **Navbar LLM Switcher Dropdown**: Dynamically switch active model between **Auto**, **Gemini 1.5 Flash**, **Groq Llama 3.3 70B**, **OpenAI GPT-4o-mini**, or **Deterministic (No AI)**.
+   - **Real-Time Step Progression & Visualizers**: Interactive cards with severity filters, evidence quotes, NAP consensus tables, and exact verbatim answers.
+
+### Quick Start Web UI:
+
+```bash
+# Terminal 1: Start the Python API Server (port 8000)
+python -m seo_audit_agent.server --port 8000
+
+# Terminal 2: Start the Vite Dev Server (port 5173)
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173` in your browser.
+
+---
+
 ## Installation
 
-Requires Python 3.9+.
+Requires Python 3.9+ and Node.js 18+.
 
 ```bash
 git clone <YOUR_REPO_URL>
 cd seo_audit_agent
 
-# Install the minimal open-source dependencies
+# Install Python dependencies
 pip install -r requirements.txt
+
+# Install frontend dependencies
+cd frontend && npm install && cd ..
 ```
 
 ---

@@ -72,6 +72,42 @@ Below is a breakdown of every file in the codebase and its precise responsibilit
   - Enforces strict grounding thresholds: if term coverage is below 50% or BM25 score is below the confidence limit, it refuses to guess and returns `null` for URL and excerpt.
   - Writes results to `answer.json`.
 
+#### 6. [`seo_audit_agent/ai_provider.py`](file:///c:/Users/Abhishek%20%20Reddy%20.%20C/Downloads/seo_audit_agent_solution/seo_audit_agent/seo_audit_agent/ai_provider.py)
+* **Purpose**: Multi-provider AI abstraction layer connecting to Google Gemini, Groq, and OpenAI via direct REST.
+* **Responsibilities**:
+  - Direct HTTPS REST client using standard library and `requests` (no LangChain or LangGraph frameworks).
+  - Multi-provider support: Google Gemini (`gemini-1.5-flash`), Groq (`llama-3.3-70b-versatile`), and OpenAI (`gpt-4o-mini`).
+  - Runtime provider resolution and switching via CLI or environment variables (`GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENAI_API_KEY`).
+  - Automatic zero-downtime graceful fallback: instantly falls back to deterministic manual generation if keys are missing, network times out, or rate limits (HTTP 429) are encountered.
+
+#### 7. [`seo_audit_agent/server.py`](file:///c:/Users/Abhishek%20%20Reddy%20.%20C/Downloads/seo_audit_agent_solution/seo_audit_agent/seo_audit_agent/server.py)
+* **Purpose**: Lightweight, zero-dependency Python HTTP API server powering the web frontend.
+* **Responsibilities**:
+  - Built using Python standard library `http.server` with multithreaded request handling.
+  - Exposes CORS-enabled REST endpoints:
+    - `POST /api/audit`: Triggers Q1 On-Page SEO audit.
+    - `POST /api/nap`: Triggers Q2 Business NAP consistency audit.
+    - `POST /api/qa`: Triggers Q3 Grounded exact-passage Q&A agent.
+    - `GET /api/health`: Health status endpoint.
+  - Seamlessly bridges frontend requests with the Python audit agents, passing dynamic `ai_provider` parameters.
+
+---
+
+### Minimalist Frontend Application (`frontend/`)
+
+Built with Vite and React using pure Vanilla CSS:
+* **`frontend/src/components/Navbar.jsx`**: Top application bar featuring brand identity, page route switcher (`Overview` vs `Audit Console`), and the requested **LLM model switching dropdown** (`Auto`, `Gemini 1.5 Flash`, `Groq Llama 3.3 70B`, `OpenAI GPT-4o-mini`, `Deterministic (No AI)`).
+* **`frontend/src/pages/LandingPage.jsx`**: Public landing page detailing system capabilities, architectural integrity, and the primary **"Check your site"** CTA button that navigates directly into the audit console.
+* **`frontend/src/pages/ConsolePage.jsx`**: Chatbot-style workspace featuring:
+  - Floating bottom search box with dynamic placeholder and 3-mode action dropdown:
+    1. `Crawl site for SEO issues` (Q1)
+    2. `NAP consistency checker` (Q2)
+    3. `AEO Q/A agent` (Q3)
+  - Real-time step progression feed with timestamped log pills.
+  - Interactive result visualizers (severity filters, code fix snippets, NAP comparison tables, and verbatim excerpt cards).
+* **`frontend/src/demoData.js`**: Pre-cached real demonstration data matching `demo_outputs/`, providing instant zero-latency feedback and offline resiliency.
+* **`frontend/src/index.css`**: Bespoke design system utilizing an Apple/Linear minimalist stone aesthetic (`#FAFAF7` canvas, `#111714` carbon text, refined typography, and smooth cubic-bezier transitions).
+
 ---
 
 ### Test Suite (`tests/`)
