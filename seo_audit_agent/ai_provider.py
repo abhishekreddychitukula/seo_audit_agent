@@ -17,30 +17,9 @@ DEFAULT_MODELS = {
 }
 
 
-def load_env_file():
-    """Auto-loads key-value pairs from .env in repo root or current directory into os.environ."""
-    candidates = [
-        os.path.join(os.getcwd(), ".env"),
-        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"),
-    ]
-    for p in candidates:
-        if os.path.isfile(p):
-            try:
-                with open(p, "r", encoding="utf-8") as f:
-                    for line in f:
-                        line = line.strip()
-                        if line and not line.startswith("#") and "=" in line:
-                            k, v = line.split("=", 1)
-                            k = k.strip()
-                            v = v.strip().strip("'\"")
-                            if k and k not in os.environ:
-                                os.environ[k] = v
-            except Exception:
-                pass
-            break
+from dotenv import load_dotenv
 
-
-load_env_file()
+load_dotenv()
 
 
 class AIProvider:
