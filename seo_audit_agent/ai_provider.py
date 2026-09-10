@@ -17,9 +17,23 @@ DEFAULT_MODELS = {
 }
 
 
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 
-load_dotenv()
+# Automatically locate and load .env from current dir or any parent directory
+load_dotenv(find_dotenv(usecwd=True), override=True)
+
+
+def _is_valid_key(val: str | None) -> bool:
+    """Verifies that an API key is not empty, whitespace, or a placeholder."""
+    if not val:
+        return False
+    v = str(val).strip().strip("'\"")
+    if not v or len(v) < 10:
+        return False
+    lower = v.lower()
+    if lower.startswith("your_") or "placeholder" in lower or "<" in lower or ">" in lower:
+        return False
+    return True
 
 
 class AIProvider:
@@ -52,24 +66,41 @@ class AIProvider:
 
         # Check explicit requested provider
         if requested == "gemini":
-            self.api_key = self.api_key or os.getenv("GEMINI_API_KEY", "")
-            return "gemini" if self.api_key else "none"
+            k = self.api_key if _is_valid_key(self.api_key) else os.getenv("GEMINI_API_KEY", "")
+            if _is_valid_key(k):
+                self.api_key = k.strip().strip("'\"")
+                return "gemini"
+            return "none"
+
         if requested == "groq":
-            self.api_key = self.api_key or os.getenv("GROQ_API_KEY", "")
-            return "groq" if self.api_key else "none"
+            k = self.api_key if _is_valid_key(self.api_key) else os.getenv("GROQ_API_KEY", "")
+            if _is_valid_key(k):
+                self.api_key = k.strip().strip("'\"")
+                return "groq"
+            return "none"
+
         if requested == "openai":
-            self.api_key = self.api_key or os.getenv("OPENAI_API_KEY", "")
-            return "openai" if self.api_key else "none"
+            k = self.api_key if _is_valid_key(self.api_key) else os.getenv("OPENAI_API_KEY", "")
+            if _is_valid_key(k):
+                self.api_key = k.strip().strip("'\"")
+                return "openai"
+            return "none"
 
         # "auto" resolution based on available environment variables
-        if os.getenv("GEMINI_API_KEY"):
-            self.api_key = os.getenv("GEMINI_API_KEY")
-            return "gemini"
-        if os.getenv("GROQ_API_KEY"):
-            self.api_key = os.getenv("GROQ_API_KEY")
+        # Prioritize Groq (free & fastest), then Gemini (free tier), then OpenAI
+        groq_k = self.api_key if _is_valid_key(self.api_key) else os.getenv("GROQ_API_KEY", "")
+        if _is_valid_key(groq_k):
+            self.api_key = groq_k.strip().strip("'\"")
             return "groq"
-        if os.getenv("OPENAI_API_KEY"):
-            self.api_key = os.getenv("OPENAI_API_KEY")
+
+        gemini_k = os.getenv("GEMINI_API_KEY", "")
+        if _is_valid_key(gemini_k):
+            self.api_key = gemini_k.strip().strip("'\"")
+            return "gemini"
+
+        openai_k = os.getenv("OPENAI_API_KEY", "")
+        if _is_valid_key(openai_k):
+            self.api_key = openai_k.strip().strip("'\"")
             return "openai"
 
         return "none"

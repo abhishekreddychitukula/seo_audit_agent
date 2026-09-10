@@ -8,7 +8,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, urlparse
 
 from . import nap, q1_onpage, q3_grounded_qa
-from .ai_provider import AIProvider, deterministic_seo_summary
+from .ai_provider import AIProvider, _is_valid_key, deterministic_seo_summary
 
 
 class APIHandler(BaseHTTPRequestHandler):
@@ -43,9 +43,9 @@ class APIHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
         if parsed.path in ("/api/health", "/"):
-            gemini_key = bool(os.getenv("GEMINI_API_KEY"))
-            groq_key = bool(os.getenv("GROQ_API_KEY"))
-            openai_key = bool(os.getenv("OPENAI_API_KEY"))
+            gemini_key = _is_valid_key(os.getenv("GEMINI_API_KEY"))
+            groq_key = _is_valid_key(os.getenv("GROQ_API_KEY"))
+            openai_key = _is_valid_key(os.getenv("OPENAI_API_KEY"))
             self._send_json(200, {
                 "status": "healthy",
                 "service": "SEO Audit Agent API",
